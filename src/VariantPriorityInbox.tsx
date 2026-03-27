@@ -13,6 +13,10 @@ interface PriorityGroup {
   items: HomeworkItem[];
 }
 
+interface VariantPriorityInboxProps {
+  selectedSubjectId?: number | null;
+}
+
 function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -54,11 +58,24 @@ function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
   return groups;
 }
 
-export default function VariantPriorityInbox() {
-  const groups = useMemo(() => classifyIntoGroups(HOMEWORK_LIST), []);
+export default function VariantPriorityInbox({
+  selectedSubjectId = null,
+}: VariantPriorityInboxProps) {
+  const groups = useMemo(() => {
+    const filteredHomework =
+      selectedSubjectId === null
+        ? HOMEWORK_LIST
+        : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId);
+
+    return classifyIntoGroups(filteredHomework);
+  }, [selectedSubjectId]);
 
   return (
     <div className="variant">
+      {groups.length === 0 && (
+        <div className="empty-state">Нет заданий по выбранному предмету</div>
+      )}
+
       {groups.map((group) => (
         <div key={group.key} className="pi-section">
           <div className={`pi-section__header pi-section__header--${group.variant}`}>

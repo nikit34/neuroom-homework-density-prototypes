@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem, type SubjectInfo } from "./mockData";
 import HwCard from "./HwCard";
 
@@ -14,10 +14,14 @@ interface SubjectStats {
   total: number;
 }
 
-function getSubjectStats(): SubjectStats[] {
+interface VariantSubjectFirstProps {
+  selectedSubjectId?: number | null;
+}
+
+function getSubjectStats(homework: HomeworkItem[]): SubjectStats[] {
   const map = new Map<number, { active: number; overdue: number; total: number }>();
 
-  for (const hw of HOMEWORK_LIST) {
+  for (const hw of homework) {
     if (!map.has(hw.subjectId)) {
       map.set(hw.subjectId, { active: 0, overdue: 0, total: 0 });
     }
@@ -37,8 +41,8 @@ function getSubjectStats(): SubjectStats[] {
     .sort((a, b) => b.overdue - a.overdue || b.active - a.active);
 }
 
-function getHomeworkForSubject(subjectId: number): HomeworkItem[] {
-  return HOMEWORK_LIST
+function getHomeworkForSubject(subjectId: number, homework: HomeworkItem[]): HomeworkItem[] {
+  return homework
     .filter((hw) => hw.subjectId === subjectId)
     .sort((a, b) => {
       if (a.status === "done" && b.status !== "done") return 1;
@@ -47,39 +51,68 @@ function getHomeworkForSubject(subjectId: number): HomeworkItem[] {
     });
 }
 
-export default function VariantSubjectFirst() {
-  const stats = useMemo(getSubjectStats, []);
+export default function VariantSubjectFirst({
+  selectedSubjectId = null,
+}: VariantSubjectFirstProps) {
+  const visibleHomework = useMemo(
+    () =>
+      selectedSubjectId === null
+        ? HOMEWORK_LIST
+        : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId),
+    [selectedSubjectId],
+  );
+  const stats = useMemo(() => getSubjectStats(visibleHomework), [visibleHomework]);
   const [selectedId, setSelectedId] = useState<number>(stats[0]?.subject.id ?? 1);
+  const effectiveSelectedId = selectedSubjectId ?? selectedId;
 
-  const selectedSubject = stats.find((s) => s.subject.id === selectedId);
-  const homework = useMemo(() => getHomeworkForSubject(selectedId), [selectedId]);
+  useEffect(() => {
+    if (selectedSubjectId !== null) {
+      setSelectedId(selectedSubjectId);
+      return;
+    }
+
+    if (!stats.some((item) => item.subject.id === selectedId)) {
+      setSelectedId(stats[0]?.subject.id ?? 1);
+    }
+  }, [selectedId, selectedSubjectId, stats]);
+
+  const selectedSubject = stats.find((s) => s.subject.id === effectiveSelectedId);
+  const homework = useMemo(
+    () => getHomeworkForSubject(effectiveSelectedId, visibleHomework),
+    [effectiveSelectedId, visibleHomework],
+  );
 
   return (
     <div className="variant">
-      {/* Subject cards row */}
-      <div className="sf-cards-row">
-        {stats.map((s) => {
-          const isActive = s.subject.id === selectedId;
-          return (
-            <button
-              key={s.subject.id}
-              className={`sf-card ${isActive ? "sf-card--active" : ""}`}
-              style={isActive ? { borderColor: s.subject.color, background: `${s.subject.color}0D` } : {}}
-              onClick={() => setSelectedId(s.subject.id)}
-            >
-              <div className="sf-card__name" style={isActive ? { color: s.subject.color } : {}}>
-                {s.subject.name}
-              </div>
-              <div className="sf-card__nums">
-                <span className="sf-card__active">{s.active}</span>
-                {s.overdue > 0 && <span className="sf-card__overdue">{s.overdue}</span>}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {selectedSubjectId === null && (
+        <div className="sf-cards-row">
+          {stats.map((s) => {
+            const isActive = s.subject.id === selectedId;
+            return (
+              <button
+                key={s.subject.id}
+                className={`sf-card ${isActive ? "sf-card--active" : ""}`}
+                style={
+                  isActive
+                    ? { borderColor: s.subject.color, background: `${s.subject.color}14` }
+                    : {}
+                }
+                onClick={() => setSelectedId(s.subject.id)}
+                type="button"
+              >
+                <div className="sf-card__name" style={isActive ? { color: s.subject.color } : {}}>
+                  {s.subject.name}
+                </div>
+                <div className="sf-card__nums">
+                  <span className="sf-card__active">{s.active}</span>
+                  {s.overdue > 0 && <span className="sf-card__overdue">{s.overdue}</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Selected subject header */}
       {selectedSubject && (
         <div className="sf-subject-header">
           <div className="sf-subject-header__dot" style={{ background: selectedSubject.subject.color }} />
@@ -93,7 +126,6 @@ export default function VariantSubjectFirst() {
         </div>
       )}
 
-      {/* Homework list — hideSubject т.к. предмет уже выбран */}
       <div className="hwc-list">
         {homework.map((hw) => (
           <HwCard key={hw.id} hw={hw} hideSubject />

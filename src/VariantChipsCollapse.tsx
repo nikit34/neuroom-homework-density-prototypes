@@ -4,6 +4,10 @@ import HwCard from "./HwCard";
 
 /* ── Variant 1+3: Subject Filter Chips + Collapse by Deadline ── */
 
+interface VariantChipsCollapseProps {
+  selectedSubjectId?: number | null;
+}
+
 function formatDeadlineGroup(dateStr: string): { key: string; label: string; priority: number } {
   const d = new Date(dateStr);
   const now = new Date();
@@ -18,15 +22,20 @@ function formatDeadlineGroup(dateStr: string): { key: string; label: string; pri
   return { key: "later", label: "Позже", priority: 4 };
 }
 
-export default function VariantChipsCollapse() {
+export default function VariantChipsCollapse({
+  selectedSubjectId = null,
+}: VariantChipsCollapseProps) {
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ later: true });
+  const effectiveSelectedSubject = selectedSubjectId ?? selectedSubject;
 
   const activeHomework = useMemo(() => {
     let list = HOMEWORK_LIST.filter((h) => h.status !== "done");
-    if (selectedSubject !== null) list = list.filter((h) => h.subjectId === selectedSubject);
+    if (effectiveSelectedSubject !== null) {
+      list = list.filter((h) => h.subjectId === effectiveSelectedSubject);
+    }
     return list;
-  }, [selectedSubject]);
+  }, [effectiveSelectedSubject]);
 
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; priority: number; items: HomeworkItem[] }>();
@@ -47,25 +56,29 @@ export default function VariantChipsCollapse() {
 
   return (
     <div className="variant">
-      <div className="chips-row">
-        <button
-          className={`chip ${selectedSubject === null ? "chip--active" : ""}`}
-          onClick={() => setSelectedSubject(null)}
-        >
-          Все предметы
-        </button>
-        {activeSubjects.map((s) => (
+      {selectedSubjectId === null && (
+        <div className="chips-row">
           <button
-            key={s.id}
-            className={`chip ${selectedSubject === s.id ? "chip--active" : ""}`}
-            style={selectedSubject === s.id ? { background: s.color, borderColor: s.color } : {}}
-            onClick={() => setSelectedSubject(selectedSubject === s.id ? null : s.id)}
+            className={`chip ${selectedSubject === null ? "chip--active" : ""}`}
+            onClick={() => setSelectedSubject(null)}
+            type="button"
           >
-            <span className="chip__dot" style={{ background: s.color }} />
-            {s.name}
+            Все предметы
           </button>
-        ))}
-      </div>
+          {activeSubjects.map((s) => (
+            <button
+              key={s.id}
+              className={`chip ${selectedSubject === s.id ? "chip--active" : ""}`}
+              style={selectedSubject === s.id ? { background: s.color, borderColor: s.color } : {}}
+              onClick={() => setSelectedSubject(selectedSubject === s.id ? null : s.id)}
+              type="button"
+            >
+              <span className="chip__dot" style={{ background: s.color }} />
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {groups.length === 0 && <div className="empty-state">Нет заданий по выбранному предмету</div>}
 
@@ -96,7 +109,7 @@ export default function VariantChipsCollapse() {
         );
       })}
 
-      <DoneSection selectedSubject={selectedSubject} />
+      <DoneSection selectedSubject={effectiveSelectedSubject} />
     </div>
   );
 }

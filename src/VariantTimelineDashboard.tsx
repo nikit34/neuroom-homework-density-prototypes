@@ -4,6 +4,10 @@ import HwCard from "./HwCard";
 
 /* ── Variant 2+4: Timeline by Date + Compact Dashboard Summary ── */
 
+interface VariantTimelineDashboardProps {
+  selectedSubjectId?: number | null;
+}
+
 function formatDateKey(dateStr: string): string {
   const d = new Date(dateStr);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -25,22 +29,31 @@ function formatDateLabel(dateStr: string): string {
   return `${weekday}, ${dayMonth}`;
 }
 
-export default function VariantTimelineDashboard() {
+export default function VariantTimelineDashboard({
+  selectedSubjectId = null,
+}: VariantTimelineDashboardProps) {
   const [showDone, setShowDone] = useState(false);
+  const visibleHomework = useMemo(
+    () =>
+      selectedSubjectId === null
+        ? HOMEWORK_LIST
+        : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId),
+    [selectedSubjectId],
+  );
 
   const stats = useMemo(() => {
-    const active = HOMEWORK_LIST.filter((h) => h.status !== "done");
+    const active = visibleHomework.filter((h) => h.status !== "done");
     return {
       newCount: active.filter((h) => h.status === "new").length,
       overdue: active.filter((h) => h.status === "missed").length,
       resend: active.filter((h) => h.status === "resend").length,
       inReview: active.filter((h) => h.status === "in_review" || h.status === "checked").length,
-      doneCount: HOMEWORK_LIST.filter((h) => h.status === "done").length,
+      doneCount: visibleHomework.filter((h) => h.status === "done").length,
     };
-  }, []);
+  }, [visibleHomework]);
 
   const dateGroups = useMemo(() => {
-    const list = HOMEWORK_LIST.filter((h) => (showDone ? true : h.status !== "done"));
+    const list = visibleHomework.filter((h) => (showDone ? true : h.status !== "done"));
     const map = new Map<string, { label: string; date: Date; items: HomeworkItem[] }>();
     for (const hw of list) {
       const key = formatDateKey(hw.deadlineAt);
@@ -50,7 +63,7 @@ export default function VariantTimelineDashboard() {
       map.get(key)!.items.push(hw);
     }
     return [...map.entries()].sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
-  }, [showDone]);
+  }, [showDone, visibleHomework]);
 
   return (
     <div className="variant">
