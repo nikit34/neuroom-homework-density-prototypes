@@ -1,17 +1,27 @@
-import { useState } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import VariantChipsCollapse from "./VariantChipsCollapse";
 import VariantTimelineDashboard from "./VariantTimelineDashboard";
+import VariantPriorityInbox from "./VariantPriorityInbox";
+import VariantSubjectFirst from "./VariantSubjectFirst";
 
 const tabs = [
-  { key: "chips-collapse", label: "Чипсы + Collapse", path: "/" },
-  { key: "timeline-dashboard", label: "Timeline + Dashboard", path: "/timeline" },
+  { key: "priority", label: "Priority Inbox", path: "/" },
+  { key: "subject", label: "Subject-first", path: "/subject" },
+  { key: "chips-collapse", label: "Chips+Collapse", path: "/chips" },
+  { key: "timeline-dashboard", label: "Timeline+Dash", path: "/timeline" },
 ] as const;
+
+function getActiveTab(pathname: string): string {
+  if (pathname === "/subject") return "subject";
+  if (pathname === "/chips") return "chips-collapse";
+  if (pathname === "/timeline") return "timeline-dashboard";
+  return "priority";
+}
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const activeTab = location.pathname === "/timeline" ? "timeline-dashboard" : "chips-collapse";
+  const activeTab = getActiveTab(location.pathname);
 
   return (
     <div className="proto-shell">
@@ -30,7 +40,9 @@ function App() {
 
         <div className="proto-screen">
           <Routes>
-            <Route path="/" element={<VariantChipsCollapse />} />
+            <Route path="/" element={<VariantPriorityInbox />} />
+            <Route path="/subject" element={<VariantSubjectFirst />} />
+            <Route path="/chips" element={<VariantChipsCollapse />} />
             <Route path="/timeline" element={<VariantTimelineDashboard />} />
           </Routes>
         </div>
