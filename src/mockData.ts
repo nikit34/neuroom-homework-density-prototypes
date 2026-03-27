@@ -6,7 +6,7 @@ export interface HomeworkItem {
   description: string;
   createdAt: string;
   deadlineAt: string;
-  status: "new" | "in_review" | "resend" | "done" | "missed";
+  status: "new" | "in_review" | "checked" | "resend" | "done" | "missed";
   estimate?: number;
   hasFiles?: boolean;
 }
@@ -44,12 +44,13 @@ export const HOMEWORK_LIST: HomeworkItem[] = [
   // --- Сегодня ---
   { id: 4, subject: "Физика", subjectId: 3, teacher: "Козлов Д.И.", description: "Лабораторная работа №7 «Измерение ускорения»", createdAt: d(-3), deadlineAt: d(0), status: "resend" },
   { id: 5, subject: "Математика", subjectId: 1, teacher: "Иванова А.П.", description: "Параграф 15, задачи 1-8", createdAt: d(-2), deadlineAt: d(0), status: "new" },
-  { id: 6, subject: "История", subjectId: 4, teacher: "Николаев В.Г.", description: "Подготовить доклад о Петре I", createdAt: d(-5), deadlineAt: d(0), status: "in_review" },
+  { id: 6, subject: "История", subjectId: 4, teacher: "Николаев В.Г.", description: "Подготовить доклад о Петре I", createdAt: d(-5), deadlineAt: d(0), status: "checked" },
 
   // --- Завтра ---
   { id: 7, subject: "Биология", subjectId: 5, teacher: "Кузнецова О.А.", description: "Заполнить таблицу «Типы клеток», параграф 22", createdAt: d(-2), deadlineAt: d(1), status: "new" },
   { id: 8, subject: "Русский язык", subjectId: 2, teacher: "Петрова М.С.", description: "Упражнение 156, 157 — правописание приставок", createdAt: d(-1), deadlineAt: d(1), status: "new" },
   { id: 9, subject: "Химия", subjectId: 7, teacher: "Федорова Л.Н.", description: "Решить задачи на моль (стр. 89)", createdAt: d(-1), deadlineAt: d(1), status: "in_review" },
+  { id: 21, subject: "Физика", subjectId: 3, teacher: "Козлов Д.И.", description: "Задачи на закон Ньютона, §12 упр. 3-7", createdAt: d(-4), deadlineAt: d(0), status: "checked" },
 
   // --- Эта неделя ---
   { id: 10, subject: "Литература", subjectId: 8, teacher: "Соколова Т.М.", description: "Прочитать «Евгений Онегин» главы 3-4", createdAt: d(-3), deadlineAt: d(3), status: "new" },

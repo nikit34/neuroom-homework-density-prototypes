@@ -1,33 +1,11 @@
 import { useState, useMemo } from "react";
 import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem, type SubjectInfo } from "./mockData";
+import HwCard from "./HwCard";
 
 /* ── Variant: Subject-First ──
    Горизонтальные карточки предметов с числами активные / долги,
    ниже список заданий выбранного предмета.
 */
-
-function formatDeadline(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diff = Math.floor((target.getTime() - today.getTime()) / 86400000);
-
-  if (diff < 0) return `просрочено`;
-  if (diff === 0) return "сегодня";
-  if (diff === 1) return "завтра";
-  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-}
-
-function statusInfo(hw: HomeworkItem): { text: string; cls: string } | null {
-  switch (hw.status) {
-    case "in_review": return { text: "На проверке", cls: "sf-status--review" };
-    case "resend": return { text: "Пересдай", cls: "sf-status--resend" };
-    case "missed": return { text: "Просрочено", cls: "sf-status--missed" };
-    case "done": return { text: `Оценка: ${hw.estimate ?? "—"}`, cls: "sf-status--done" };
-    default: return null;
-  }
-}
 
 interface SubjectStats {
   subject: SubjectInfo;
@@ -55,10 +33,7 @@ function getSubjectStats(): SubjectStats[] {
 
   return SUBJECTS
     .filter((subj) => map.has(subj.id))
-    .map((subj) => ({
-      subject: subj,
-      ...map.get(subj.id)!,
-    }))
+    .map((subj) => ({ subject: subj, ...map.get(subj.id)! }))
     .sort((a, b) => b.overdue - a.overdue || b.active - a.active);
 }
 
@@ -66,10 +41,8 @@ function getHomeworkForSubject(subjectId: number): HomeworkItem[] {
   return HOMEWORK_LIST
     .filter((hw) => hw.subjectId === subjectId)
     .sort((a, b) => {
-      // done в конец
       if (a.status === "done" && b.status !== "done") return 1;
       if (a.status !== "done" && b.status === "done") return -1;
-      // по дедлайну
       return new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime();
     });
 }
@@ -120,42 +93,11 @@ export default function VariantSubjectFirst() {
         </div>
       )}
 
-      {/* Homework list */}
-      <div className="sf-list">
-        {homework.map((hw) => {
-          const isDone = hw.status === "done";
-          const isOverdue = hw.status === "missed" || hw.status === "resend";
-          const status = statusInfo(hw);
-          const deadlineText = formatDeadline(hw.deadlineAt);
-
-          return (
-            <div key={hw.id} className={`sf-item ${isDone ? "sf-item--done" : ""} ${isOverdue ? "sf-item--overdue" : ""}`}>
-              <div className="sf-item__body">
-                <div className="sf-item__desc">{hw.description}</div>
-                <div className="sf-item__meta">
-                  <span className="sf-item__teacher">{hw.teacher}</span>
-                  <span className="sf-item__created">
-                    {new Date(hw.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
-                  </span>
-                </div>
-              </div>
-              <div className="sf-item__right">
-                {status && <span className={`sf-item__status ${status.cls}`}>{status.text}</span>}
-                {!isDone && (
-                  <span className={`sf-item__deadline ${isOverdue ? "sf-item__deadline--overdue" : ""}`}>
-                    {deadlineText}
-                  </span>
-                )}
-                {isDone && hw.estimate && (
-                  <span className="sf-item__estimate">{hw.estimate}</span>
-                )}
-                <svg className="sf-item__arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-          );
-        })}
+      {/* Homework list — hideSubject т.к. предмет уже выбран */}
+      <div className="hwc-list">
+        {homework.map((hw) => (
+          <HwCard key={hw.id} hw={hw} hideSubject />
+        ))}
       </div>
     </div>
   );
