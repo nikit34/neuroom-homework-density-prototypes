@@ -8,6 +8,10 @@ import VariantChipsCollapse from "./VariantChipsCollapse";
 import VariantTimelineDashboard from "./VariantTimelineDashboard";
 import VariantPriorityInbox from "./VariantPriorityInbox";
 import VariantSubjectFirst from "./VariantSubjectFirst";
+import VariantCalendarWeek from "./VariantCalendarWeek";
+import VariantKanban from "./VariantKanban";
+import VariantMatrix from "./VariantMatrix";
+import VariantProgressTracker from "./VariantProgressTracker";
 
 const tabs = [
   { key: "figma", label: "Figma Mobile", path: "/" },
@@ -15,6 +19,10 @@ const tabs = [
   { key: "subject", label: "Subject-first", path: "/subject" },
   { key: "chips-collapse", label: "Chips+Collapse", path: "/chips" },
   { key: "timeline-dashboard", label: "Timeline+Dash", path: "/timeline" },
+  { key: "calendar", label: "Calendar Week", path: "/calendar" },
+  { key: "kanban", label: "Kanban", path: "/kanban" },
+  { key: "matrix", label: "Matrix", path: "/matrix" },
+  { key: "progress", label: "Progress", path: "/progress" },
 ] as const;
 
 function getActiveTab(pathname: string): string {
@@ -22,6 +30,10 @@ function getActiveTab(pathname: string): string {
   if (pathname === "/subject") return "subject";
   if (pathname === "/chips") return "chips-collapse";
   if (pathname === "/timeline") return "timeline-dashboard";
+  if (pathname === "/calendar") return "calendar";
+  if (pathname === "/kanban") return "kanban";
+  if (pathname === "/matrix") return "matrix";
+  if (pathname === "/progress") return "progress";
   return "figma";
 }
 
@@ -85,6 +97,10 @@ function App() {
             <Route path="/subject" element={<VariantSubjectFirst selectedSubjectId={selectedSubjectId} />} />
             <Route path="/chips" element={<VariantChipsCollapse selectedSubjectId={selectedSubjectId} />} />
             <Route path="/timeline" element={<VariantTimelineDashboard selectedSubjectId={selectedSubjectId} />} />
+            <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} />} />
+            <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} />} />
+            <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} />} />
+            <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} />} />
           </Routes>
         </div>
       </div>
