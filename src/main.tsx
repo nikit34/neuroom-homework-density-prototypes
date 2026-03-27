@@ -6,7 +6,7 @@ import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter basename="/homework-density-prototypes">
+    <BrowserRouter basename="/neuroom-homework-density-prototypes">
       <App />
     </BrowserRouter>
   </React.StrictMode>
