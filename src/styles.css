@@ -1580,23 +1580,454 @@ button {
   filter: brightness(0.98);
 }
 
+/* ═══════════════════════════════════════════════════
+   Mobile — iPhone 11 (414pt) and below
+   ═══════════════════════════════════════════════════ */
+
 @media (max-width: 480px) {
+  /* ── Shell: remove desktop "phone in frame" look ── */
   .proto-shell {
-    padding: 12px 8px 24px;
-    gap: 12px;
-  }
-
-  .proto-toolbar {
-    gap: 6px;
-  }
-
-  .proto-tab {
-    padding: 9px 12px;
-    font-size: 11px;
+    padding: 0;
+    gap: 0;
+    min-height: auto;
   }
 
   .proto-phone {
     width: 100%;
-    border-radius: 18px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* ── Toolbar: horizontal scroll instead of wrap ── */
+  .proto-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+    max-width: 100%;
+    padding: 10px 12px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .proto-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .proto-tab {
+    padding: 8px 12px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  /* ── Header ── */
+  .app-topbar {
+    padding: 10px 16px;
+  }
+
+  .app-header {
+    padding: 12px 16px;
+  }
+
+  .app-title {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .app-select {
+    min-height: 40px;
+    padding: 10px 36px 10px 14px;
+    font-size: 13px;
+  }
+
+  /* ── Screen content ── */
+  .proto-screen {
+    padding: 14px 16px 24px;
+  }
+
+  .variant {
+    gap: 20px;
+  }
+
+  /* ── HwCard: more compact ── */
+  .hwc__body {
+    padding: 14px;
+    gap: 10px;
+    min-height: auto;
+  }
+
+  .hwc__subject {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  .hwc__desc {
+    font-size: 13px;
+    line-height: 18px;
+    min-height: auto;
+  }
+
+  .hwc__deadline {
+    font-size: 13px;
+  }
+
+  .hwc__actions {
+    gap: 6px;
+  }
+
+  .hwc__primary {
+    min-height: 34px;
+    font-size: 13px;
+    padding: 7px 14px;
+  }
+
+  .hwc__icon-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* ── Section headers ── */
+  .figma-section__title,
+  .pi-section__title {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  .figma-section__list,
+  .pi-section__list,
+  .collapse-body,
+  .timeline-items,
+  .hwc-list {
+    gap: 12px;
+  }
+
+  /* ── Chips & Subject cards ── */
+  .chips-row,
+  .sf-cards-row {
+    gap: 6px;
+    margin: 0 -16px;
+    padding: 0 16px 4px;
+  }
+
+  .chip {
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .sf-card {
+    min-width: 96px;
+    padding: 12px;
+  }
+
+  .sf-card__name {
+    font-size: 13px;
+  }
+
+  .sf-card__active {
+    font-size: 20px;
+  }
+
+  /* ── Collapse ── */
+  .collapse-group {
+    border-radius: 14px;
+  }
+
+  .collapse-header {
+    padding: 12px 14px;
+  }
+
+  .collapse-body {
+    padding: 0 14px 14px;
+  }
+
+  /* ── Dashboard ── */
+  .dashboard {
+    gap: 10px;
+  }
+
+  .dash-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .dash-card__num {
+    font-size: 24px;
+    line-height: 28px;
+  }
+
+  .dash-card__label {
+    font-size: 12px;
+  }
+
+  .toggle-done {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  /* ── Timeline ── */
+  .timeline {
+    gap: 16px;
+  }
+
+  .timeline-group {
+    gap: 10px;
+  }
+
+  /* ── Calendar Week ── */
+  .cal-grid {
+    gap: 3px;
+  }
+
+  .cal-cell {
+    padding: 4px 2px;
+    min-height: 64px;
+    border-radius: 8px;
+  }
+
+  .cal-cell__day {
+    font-size: 7px;
+  }
+
+  .cal-cell__num {
+    font-size: 11px;
+  }
+
+  .cal-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .cal-mini__text {
+    font-size: 6px;
+  }
+
+  .cal-cell__more {
+    font-size: 7px;
+  }
+
+  .cal-overdue-banner {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .cal-overdue-item__subject {
+    font-size: 11px;
+  }
+
+  .cal-overdue-item__desc {
+    font-size: 10px;
+  }
+
+  /* ── Kanban ── */
+  .kanban-scroll {
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 10px;
+  }
+
+  .kanban-col {
+    min-width: 180px;
+    max-width: 200px;
+  }
+
+  .kanban-card__body {
+    padding: 8px;
+  }
+
+  .kanban-card__subject {
+    font-size: 11px;
+  }
+
+  .kanban-card__desc {
+    font-size: 10px;
+  }
+
+  /* ── Matrix ── */
+  .mtx-wrapper {
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  .mtx-table {
+    min-width: 380px;
+    border-spacing: 2px;
+  }
+
+  .mtx-corner {
+    width: 64px;
+  }
+
+  .mtx-subject__name {
+    font-size: 9px;
+  }
+
+  .mtx-subject__dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .mtx-pip {
+    width: 8px;
+    height: 8px;
+  }
+
+  .mtx-cell {
+    padding: 4px 1px;
+  }
+
+  .mtx-legend {
+    gap: 8px;
+  }
+
+  .mtx-legend__item {
+    font-size: 9px;
+  }
+
+  /* ── Progress Tracker ── */
+  .prog-hero {
+    padding: 14px;
+    gap: 16px;
+    border-radius: 14px;
+  }
+
+  .prog-hero__ring-wrapper {
+    width: 70px;
+    height: 70px;
+  }
+
+  .prog-hero__ring {
+    width: 70px;
+    height: 70px;
+  }
+
+  .prog-hero__pct {
+    font-size: 16px;
+  }
+
+  .prog-hero__num {
+    font-size: 18px;
+  }
+
+  .prog-hero__label {
+    font-size: 12px;
+  }
+
+  .prog-bar-row__name {
+    font-size: 12px;
+  }
+
+  /* ── Quick Wins ── */
+  .qw-summary {
+    gap: 8px;
+  }
+
+  .qw-summary__item {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .qw-summary__value {
+    font-size: 18px;
+  }
+
+  .qw-summary__label {
+    font-size: 11px;
+  }
+
+  .qw-card {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .qw-card__subject {
+    font-size: 12px;
+  }
+
+  .qw-card__desc {
+    font-size: 12px;
+  }
+
+  .qw-card__action {
+    min-height: 32px;
+    font-size: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   Very small screens (iPhone SE, 375pt)
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 375px) {
+  .proto-screen {
+    padding: 12px 12px 20px;
+  }
+
+  .hwc__body {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .hwc__subject {
+    font-size: 14px;
+  }
+
+  .hwc__desc {
+    font-size: 12px;
+  }
+
+  .hwc__primary {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .chips-row,
+  .sf-cards-row {
+    margin: 0 -12px;
+    padding: 0 12px 4px;
+  }
+
+  .kanban-scroll {
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .kanban-col {
+    min-width: 160px;
+    max-width: 180px;
+  }
+
+  .mtx-wrapper {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+
+  .dashboard {
+    gap: 8px;
+  }
+
+  .dash-card {
+    padding: 12px;
+  }
+
+  .dash-card__num {
+    font-size: 20px;
+  }
+
+  .cal-cell {
+    min-height: 56px;
+    padding: 3px 2px;
+  }
+
+  .cal-mini {
+    display: none;
   }
 }
