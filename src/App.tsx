@@ -15,7 +15,7 @@ import VariantProgressTracker from "./VariantProgressTracker";
 import VariantQuickWins from "./VariantQuickWins";
 
 const tabs = [
-  { key: "figma", label: "Figma Mobile", path: "/" },
+  { key: "figma", label: "Простой список", path: "/" },
   { key: "priority", label: "Priority Inbox", path: "/priority" },
 
   { key: "chips-collapse", label: "Chips+Collapse", path: "/chips" },
