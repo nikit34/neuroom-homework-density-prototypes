@@ -12,6 +12,7 @@ import VariantCalendarWeek from "./VariantCalendarWeek";
 import VariantKanban from "./VariantKanban";
 import VariantMatrix from "./VariantMatrix";
 import VariantProgressTracker from "./VariantProgressTracker";
+import VariantQuickWins from "./VariantQuickWins";
 
 const tabs = [
   { key: "figma", label: "Figma Mobile", path: "/" },
@@ -23,6 +24,7 @@ const tabs = [
   { key: "kanban", label: "Kanban", path: "/kanban" },
   { key: "matrix", label: "Matrix", path: "/matrix" },
   { key: "progress", label: "Progress", path: "/progress" },
+  { key: "quick-wins", label: "Quick Wins", path: "/quick-wins" },
 ] as const;
 
 function getActiveTab(pathname: string): string {
@@ -34,6 +36,7 @@ function getActiveTab(pathname: string): string {
   if (pathname === "/kanban") return "kanban";
   if (pathname === "/matrix") return "matrix";
   if (pathname === "/progress") return "progress";
+  if (pathname === "/quick-wins") return "quick-wins";
   return "figma";
 }
 
@@ -101,6 +104,7 @@ function App() {
             <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} />} />
             <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} />} />
             <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} />} />
+            <Route path="/quick-wins" element={<VariantQuickWins selectedSubjectId={selectedSubjectId} />} />
           </Routes>
         </div>
       </div>

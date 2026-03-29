@@ -106,7 +106,7 @@ function getCardViewModel(hw: HomeworkItem): CardViewModel {
   }
 }
 
-export default function HwCard({ hw }: HwCardProps) {
+export default function HwCard({ hw, hideSubject = false }: HwCardProps) {
   const cardView = getCardViewModel(hw);
 
   return (
@@ -133,7 +133,7 @@ export default function HwCard({ hw }: HwCardProps) {
         </div>
 
         <div className="hwc__content">
-          <h3 className="hwc__subject">{hw.subject}</h3>
+          {!hideSubject ? <h3 className="hwc__subject">{hw.subject}</h3> : null}
           <p className="hwc__desc">{hw.description}</p>
         </div>
 

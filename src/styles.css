@@ -1,12 +1,12 @@
 :root {
-  --canvas-bg: #f5f2ff;
+  --canvas-bg: #f5f5f5;
   --surface: #ffffff;
   --surface-soft: #fbf8ff;
   --border: #ededf6;
-  --border-strong: #e1d9ff;
+  --border-strong: #dfdff0;
   --text: #232323;
   --text-muted: #333435;
-  --text-subtle: #6f6b7d;
+  --text-subtle: #7c7c87;
   --purple: #7455ff;
   --purple-shadow: rgba(101, 31, 255, 0.2);
   --orange: #ffd769;
@@ -31,7 +31,7 @@ body,
 body {
   margin: 0;
   font-family: "Aeonik Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #faf8ff 0%, var(--canvas-bg) 48%, #f0ebff 100%);
+  background: var(--canvas-bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
@@ -49,9 +49,9 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   min-height: 100vh;
-  padding: 24px 16px 40px;
+  padding: 20px 16px 28px;
 }
 
 .proto-toolbar {
@@ -63,8 +63,8 @@ button {
 }
 
 .proto-tab {
-  border: 1px solid rgba(116, 85, 255, 0.18);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--border);
+  background: #ffffff;
   color: var(--text-subtle);
   border-radius: 999px;
   padding: 10px 14px;
@@ -76,7 +76,7 @@ button {
 }
 
 .proto-tab:hover {
-  border-color: rgba(116, 85, 255, 0.36);
+  border-color: rgba(116, 85, 255, 0.3);
   color: var(--text);
   transform: translateY(-1px);
 }
@@ -92,10 +92,10 @@ button {
   width: min(100%, 375px);
   min-height: 812px;
   background: var(--surface);
-  border: 1px solid rgba(237, 237, 246, 0.72);
-  border-radius: 28px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(76, 52, 142, 0.14);
+  box-shadow: 0 6px 18px rgba(35, 35, 35, 0.06);
 }
 
 .app-topbar {
@@ -125,7 +125,7 @@ button {
 }
 
 .app-menu-button:hover {
-  border-color: rgba(116, 85, 255, 0.28);
+  border-color: rgba(116, 85, 255, 0.22);
   transform: translateY(-1px);
 }
 
@@ -139,6 +139,7 @@ button {
   flex-direction: column;
   gap: 8px;
   padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .app-title {
@@ -146,6 +147,7 @@ button {
   font-size: 20px;
   font-weight: 500;
   line-height: 28px;
+  color: var(--text);
 }
 
 .app-subject-filter {
@@ -183,13 +185,13 @@ button {
 }
 
 .proto-screen {
-  padding: 0 20px 32px;
+  padding: 16px 20px 28px;
 }
 
 .variant {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
 .variant--figma {
@@ -265,7 +267,7 @@ button {
   font-size: 14px;
   line-height: 20px;
   color: var(--text-subtle);
-  background: rgba(251, 248, 255, 0.72);
+  background: #ffffff;
 }
 
 .hwc {
@@ -278,7 +280,7 @@ button {
 
 .hwc:hover {
   border-color: rgba(116, 85, 255, 0.2);
-  box-shadow: 0 18px 32px rgba(99, 77, 163, 0.08);
+  box-shadow: 0 8px 20px rgba(99, 77, 163, 0.08);
   transform: translateY(-1px);
 }
 
@@ -291,6 +293,7 @@ button {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+  min-height: 220px;
 }
 
 .hwc__top {
@@ -397,6 +400,7 @@ button {
   color: var(--text-muted);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  min-height: 40px;
 }
 
 .hwc__deadline {
@@ -427,11 +431,12 @@ button {
   display: flex;
   align-items: stretch;
   gap: 8px;
+  margin-top: auto;
 }
 
 .hwc__primary {
   flex: 1;
-  min-height: 40px;
+  min-height: 36px;
   border: none;
   border-radius: 10px;
   background: var(--black-button);
@@ -439,7 +444,7 @@ button {
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
-  padding: 10px 16px;
+  padding: 8px 16px;
 }
 
 .hwc__icon-button {
@@ -521,9 +526,9 @@ button {
 
 .collapse-group {
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
 }
 
 .collapse-group--overdue {
@@ -532,7 +537,7 @@ button {
 }
 
 .collapse-group--done {
-  background: rgba(250, 249, 255, 0.78);
+  background: #ffffff;
 }
 
 .collapse-header {
@@ -607,9 +612,9 @@ button {
 
 .dash-card {
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.88);
+  background: #ffffff;
 }
 
 .dash-card__num {
@@ -627,7 +632,7 @@ button {
 }
 
 .dash-card--new {
-  background: rgba(251, 248, 255, 0.92);
+  background: #fbf8ff;
 }
 
 .dash-card--new .dash-card__num {
@@ -635,7 +640,7 @@ button {
 }
 
 .dash-card--overdue {
-  background: rgba(255, 245, 245, 0.94);
+  background: #fff6f6;
 }
 
 .dash-card--overdue .dash-card__num {
@@ -643,7 +648,7 @@ button {
 }
 
 .dash-card--resend {
-  background: rgba(255, 245, 221, 0.94);
+  background: #fff9ea;
 }
 
 .dash-card--resend .dash-card__num {
@@ -651,7 +656,7 @@ button {
 }
 
 .dash-card--review {
-  background: rgba(241, 255, 247, 0.94);
+  background: #f4fff8;
 }
 
 .dash-card--review .dash-card__num {
@@ -662,7 +667,7 @@ button {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.86);
+  background: #ffffff;
   color: var(--text);
   padding: 12px 14px;
   font-size: 14px;
@@ -726,6 +731,7 @@ button {
   gap: 8px;
   min-width: 108px;
   padding: 14px;
+  border-radius: 12px;
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -802,7 +808,7 @@ button {
   border: 1px solid rgba(212, 87, 87, 0.24);
   border-radius: 16px;
   padding: 14px 16px;
-  background: rgba(255, 245, 245, 0.9);
+  background: #fff6f6;
 }
 
 .cal-overdue-banner__label {
@@ -874,7 +880,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: var(--surface);
+  background: #ffffff;
   transition: border-color 0.2s;
 }
 
@@ -1025,7 +1031,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
-  background: var(--surface);
+  background: #ffffff;
   display: flex;
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -1172,7 +1178,7 @@ button {
   vertical-align: middle;
   padding: 6px 2px;
   border-radius: 6px;
-  background: rgba(250, 249, 255, 0.5);
+  background: #f8f8fc;
   min-height: 28px;
 }
 
@@ -1226,8 +1232,8 @@ button {
   gap: 20px;
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 18px;
-  background: rgba(251, 248, 255, 0.72);
+  border-radius: 16px;
+  background: #ffffff;
 }
 
 .prog-hero__ring-wrapper {
@@ -1365,6 +1371,215 @@ button {
   gap: 16px;
 }
 
+/* ═══════════════════════════════════════════════════
+   Quick Wins
+   ═══════════════════════════════════════════════════ */
+
+.quickwins {
+  gap: 20px;
+}
+
+.qw-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.qw-summary__item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.qw-summary__value {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.qw-summary__label {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text-subtle);
+}
+
+.qw-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qw-section__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qw-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+
+.qw-section__count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(116, 85, 255, 0.1);
+  color: var(--purple);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.qw-section__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qw-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.qw-card:hover {
+  border-color: rgba(116, 85, 255, 0.22);
+  box-shadow: 0 12px 26px rgba(99, 77, 163, 0.08);
+  transform: translateY(-1px);
+}
+
+.qw-card--today {
+  background: rgba(116, 85, 255, 0.05);
+  border-color: rgba(116, 85, 255, 0.25);
+}
+
+.qw-card--overdue {
+  background: rgba(255, 245, 245, 0.85);
+  border-color: rgba(212, 87, 87, 0.24);
+}
+
+.qw-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qw-card__subject-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.qw-card__subject-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.qw-card__subject {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qw-card__effort {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(35, 35, 35, 0.08);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.qw-card__effort--fast {
+  background: rgba(7, 190, 126, 0.12);
+  color: #0b915f;
+}
+
+.qw-card__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.qw-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.qw-card__deadline {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-subtle);
+}
+
+.qw-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(232, 169, 48, 0.18);
+  color: #8b5d00;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.qw-card__badge--danger {
+  background: rgba(212, 87, 87, 0.14);
+  color: #c03b3b;
+}
+
+.qw-card__action {
+  min-height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: #232323;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.qw-card__action:hover {
+  filter: brightness(0.98);
+}
+
 @media (max-width: 480px) {
   .proto-shell {
     padding: 12px 8px 24px;
@@ -1382,6 +1597,6 @@ button {
 
   .proto-phone {
     width: 100%;
-    border-radius: 24px;
+    border-radius: 18px;
   }
 }
