@@ -678,40 +678,82 @@ button {
 .timeline {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
+  position: relative;
+  padding-left: 24px;
+}
+
+/* Vertical line */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  background: var(--border);
+  border-radius: 1px;
 }
 
 .timeline-group {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 24px;
+  position: relative;
+}
+
+.timeline-group:last-child {
+  padding-bottom: 0;
+}
+
+/* Horizontal connector from line to cards */
+.timeline-group::before {
+  content: "";
+  position: absolute;
+  left: -17px;
+  top: 14px;
+  width: 10px;
+  height: 2px;
+  background: var(--border);
 }
 
 .timeline-date {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
 }
 
 .timeline-date__dot {
-  width: 10px;
-  height: 10px;
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
-  background: rgba(116, 85, 255, 0.18);
+  background: var(--surface);
+  border: 2px solid var(--border);
   flex-shrink: 0;
+  z-index: 1;
 }
 
 .timeline-date--today .timeline-date__dot {
   background: var(--purple);
+  border-color: var(--purple);
+  box-shadow: 0 0 0 4px rgba(116, 85, 255, 0.15);
 }
 
 .timeline-date--overdue .timeline-date__dot {
   background: #d45757;
+  border-color: #d45757;
+  box-shadow: 0 0 0 4px rgba(212, 87, 87, 0.15);
 }
 
 .timeline-date__text {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 20px;
   color: var(--text);
 }
@@ -1773,11 +1815,27 @@ button {
 
   /* ── Timeline ── */
   .timeline {
-    gap: 16px;
+    padding-left: 20px;
+  }
+
+  .timeline::before {
+    left: 6px;
   }
 
   .timeline-group {
     gap: 10px;
+    padding-bottom: 20px;
+  }
+
+  .timeline-group::before {
+    left: -14px;
+    width: 8px;
+  }
+
+  .timeline-date__dot {
+    left: -24px;
+    width: 14px;
+    height: 14px;
   }
 
   /* ── Calendar Week ── */
