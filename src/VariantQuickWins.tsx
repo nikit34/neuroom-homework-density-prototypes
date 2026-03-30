@@ -1,121 +1,104 @@
 import { useMemo } from "react";
 import { HOMEWORK_LIST, SUBJECTS, isOverdue, type HomeworkItem } from "./mockData";
-import HwCard from "./HwCard";
+
+/* ── Variant: Quick Wins ──
+   Один плоский ранжированный список.
+   Карточка: молнии сложности + предмет, описание, прогресс-бар времени.
+   Алгоритм сортировки скрыт от ученика.
+*/
 
 interface VariantQuickWinsProps {
   selectedSubjectId?: number | null;
   onSelect?: (hw: HomeworkItem) => void;
 }
 
-interface QuickTask extends HomeworkItem {
-  effortMinutes: number;
+interface RankedTask extends HomeworkItem {
+  complexity: number;    // 1-5
   dayDiff: number;
+  urgency: number;       // 0-1
+  score: number;         // итоговый скор для сортировки
 }
 
-function getSubjectColor(subjectId: number): string {
-  return SUBJECTS.find((subject) => subject.id === subjectId)?.color ?? "#999999";
+function subjectColor(subjectId: number): string {
+  return SUBJECTS.find((s) => s.id === subjectId)?.color ?? "#999";
 }
 
 function getDayDiff(dateStr: string): number {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const deadline = new Date(dateStr);
-  const target = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
-
-  return Math.floor((target.getTime() - today.getTime()) / 86400000);
+  const target = new Date(dateStr);
+  const t = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  return Math.floor((t.getTime() - today.getTime()) / 86400000);
 }
 
-function formatDueLabel(dayDiff: number): string {
-  if (dayDiff < 0) return `Просрочено на ${Math.abs(dayDiff)} дн.`;
-  if (dayDiff === 0) return "Сдать сегодня";
-  if (dayDiff === 1) return "Сдать завтра";
-  return `Сдать через ${dayDiff} дн.`;
-}
-
-function estimateEffortMinutes(hw: HomeworkItem): number {
+function estimateComplexity(hw: HomeworkItem): number {
   const text = hw.description.toLowerCase();
-  let estimate = 10;
 
-  if (hw.description.length > 85) estimate += 5;
-  if (hw.description.length > 130) estimate += 5;
-
-  if (/(сочин|доклад|essay|контрольн|лаборатор|гербар|анализ)/i.test(text)) {
-    estimate += 15;
-  }
-
-  if (/(прочитать|выучить|подготовить)/i.test(text)) {
-    estimate += 5;
-  }
-
-  if (isOverdue(hw) || hw.status === 25) {
-    estimate += 5;
-  }
-
-  if (hw.hasFiles) {
-    estimate += 5;
-  }
-
-  return estimate;
+  if (/(доклад|essay|write an essay|проект)/i.test(text)) return 5;
+  if (/(сочинен|лаборатор|изложен)/i.test(text)) return 4;
+  if (/(контрольн|подготовк|прочитать|выучить|конспект)/i.test(text)) return 3;
+  if (/(таблиц|теорем|доказать|несколько)/i.test(text)) return 2;
+  return 1;
 }
 
-function toQuickTask(hw: HomeworkItem): QuickTask {
-  return {
-    ...hw,
-    effortMinutes: estimateEffortMinutes(hw),
-    dayDiff: getDayDiff(hw.deadlineAt),
-  };
+function rankTasks(list: HomeworkItem[]): RankedTask[] {
+  const tasks: RankedTask[] = list.map((hw) => {
+    const dayDiff = getDayDiff(hw.deadlineAt);
+    const complexity = estimateComplexity(hw);
+
+    // urgency: 1.0 = просрочено/сегодня, 0.0 = далеко
+    const urgency = dayDiff <= 0 ? 1.0 : Math.max(0, 1 - dayDiff / 14);
+
+    // Итоговый score: выше = делать первым
+    // Лёгкие + срочные наверху (quick wins), тяжёлые + далёкие внизу
+    const score = urgency * 0.5 + (1 - (complexity - 1) / 4) * 0.3 + Math.random() * 0.01;
+
+    return { ...hw, complexity, dayDiff, urgency, score };
+  });
+
+  // Чередование предметов: бонус если предмет отличается от предыдущего
+  tasks.sort((a, b) => b.score - a.score);
+
+  // Второй проход: мягкое чередование предметов
+  const result: RankedTask[] = [];
+  const remaining = [...tasks];
+  let lastSubjectId = -1;
+
+  while (remaining.length > 0) {
+    // Ищем задачу с другим предметом среди топ-3
+    let picked = -1;
+    for (let i = 0; i < Math.min(3, remaining.length); i++) {
+      if (remaining[i].subjectId !== lastSubjectId) {
+        picked = i;
+        break;
+      }
+    }
+    if (picked === -1) picked = 0;
+
+    const task = remaining.splice(picked, 1)[0];
+    lastSubjectId = task.subjectId;
+    result.push(task);
+  }
+
+  return result;
 }
 
-function compareQuickTasks(a: QuickTask, b: QuickTask): number {
-  const taskPriority = (task: QuickTask): number => {
-    if (isOverdue(task)) return 0;
-    if (task.status === 25) return 1;
-    return 2;
-  };
+/** Прогресс-бар: сколько "запаса" осталось. 1.0 = полно времени, 0.0 = горит */
+function timeProgress(dayDiff: number): { pct: number; color: string } {
+  if (dayDiff <= 0) return { pct: 0, color: "#d45757" };
+  if (dayDiff === 1) return { pct: 15, color: "#d45757" };
+  if (dayDiff <= 3) return { pct: 35, color: "#e8a930" };
+  if (dayDiff <= 7) return { pct: 65, color: "#f5c842" };
+  return { pct: 90, color: "#07be7e" };
+}
 
+function Lightning({ count }: { count: number }) {
   return (
-    taskPriority(a) - taskPriority(b) ||
-    a.dayDiff - b.dayDiff ||
-    a.effortMinutes - b.effortMinutes
-  );
-}
-
-function QuickTaskCard({ task, onSelect }: { task: QuickTask; onSelect?: (hw: HomeworkItem) => void }) {
-  return (
-    <article
-      className={`qw-card ${
-        task.dayDiff < 0 ? "qw-card--overdue" : task.dayDiff === 0 ? "qw-card--today" : ""
-      }`}
-      onClick={() => onSelect?.(task)}
-      style={{ cursor: onSelect ? "pointer" : undefined }}
-    >
-      <div className="qw-card__top">
-        <div className="qw-card__subject-wrap">
-          <span
-            className="qw-card__subject-dot"
-            style={{ background: getSubjectColor(task.subjectId) }}
-          />
-          <span className="qw-card__subject">{task.subject}</span>
-        </div>
-        <span className={`qw-card__effort ${task.effortMinutes <= 10 ? "qw-card__effort--fast" : ""}`}>
-          ~{task.effortMinutes} мин
-        </span>
-      </div>
-
-      <p className="qw-card__desc">{task.description}</p>
-
-      <div className="qw-card__meta">
-        <span className="qw-card__deadline">{formatDueLabel(task.dayDiff)}</span>
-        {task.status === 25 && <span className="qw-card__badge">Пересдача</span>}
-        {isOverdue(task) && (
-          <span className="qw-card__badge qw-card__badge--danger">Долг</span>
-        )}
-      </div>
-
-      <button className="qw-card__action" type="button">
-        Сделать сейчас
-      </button>
-    </article>
+    <span className="qw2-lightning" aria-label={`Сложность: ${count} из 5`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <span key={i} className={`qw2-bolt ${i < count ? "qw2-bolt--on" : ""}`}>⚡</span>
+      ))}
+    </span>
   );
 }
 
@@ -123,101 +106,68 @@ export default function VariantQuickWins({
   selectedSubjectId = null,
   onSelect,
 }: VariantQuickWinsProps) {
-  const visibleHomework = useMemo(
-    () =>
-      selectedSubjectId === null
-        ? HOMEWORK_LIST
-        : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId),
-    [selectedSubjectId],
-  );
+  const tasks = useMemo(() => {
+    let list = HOMEWORK_LIST.filter((hw) => hw.status === 10 || hw.status === 25);
+    if (selectedSubjectId !== null) {
+      list = list.filter((hw) => hw.subjectId === selectedSubjectId);
+    }
+    return rankTasks(list);
+  }, [selectedSubjectId]);
 
-  const actionableTasks = useMemo(
-    () => visibleHomework.filter((hw) => hw.status === 10 || hw.status === 25),
-    [visibleHomework],
-  );
-
-  const rankedTasks = useMemo(
-    () => actionableTasks.map(toQuickTask).sort(compareQuickTasks),
-    [actionableTasks],
-  );
-
-  const quickTasks = useMemo(
-    () => rankedTasks.filter((task) => task.effortMinutes <= 20),
-    [rankedTasks],
-  );
-
-  const focusTasks = quickTasks.slice(0, 3);
-  const laterTasks = quickTasks.slice(3);
-  const heavyTasks = rankedTasks.filter((task) => task.effortMinutes > 20).slice(0, 3);
-
-  const totalQuickMinutes = quickTasks.reduce((sum, task) => sum + task.effortMinutes, 0);
-  const urgentQuickCount = quickTasks.filter((task) => task.dayDiff <= 0).length;
-  const weekQuickCount = quickTasks.filter((task) => task.dayDiff <= 7).length;
+  if (tasks.length === 0) {
+    return (
+      <div className="variant">
+        <div className="empty-state">Все задания сданы или на проверке</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="variant quickwins">
-      <section className="qw-summary">
-        <div className="qw-summary__item">
-          <div className="qw-summary__value">{quickTasks.length}</div>
-          <div className="qw-summary__label">быстрых задач</div>
-        </div>
-        <div className="qw-summary__item">
-          <div className="qw-summary__value">{urgentQuickCount}</div>
-          <div className="qw-summary__label">срочно сегодня</div>
-        </div>
-        <div className="qw-summary__item">
-          <div className="qw-summary__value">{weekQuickCount}</div>
-          <div className="qw-summary__label">на неделю</div>
-        </div>
-        <div className="qw-summary__item">
-          <div className="qw-summary__value">~{totalQuickMinutes}м</div>
-          <div className="qw-summary__label">общее время</div>
-        </div>
-      </section>
+    <div className="variant qw2">
+      <div className="qw2-list">
+        {tasks.map((task, index) => {
+          const progress = timeProgress(task.dayDiff);
+          const isFirst = index === 0;
+          const color = subjectColor(task.subjectId);
 
-      {focusTasks.length > 0 ? (
-        <section className="qw-section">
-          <div className="qw-section__header">
-            <h2 className="qw-section__title">Quick wins: начать сейчас</h2>
-            <span className="qw-section__count">{focusTasks.length}</span>
-          </div>
-          <div className="qw-section__list">
-            {focusTasks.map((task) => (
-              <QuickTaskCard key={task.id} task={task} onSelect={onSelect} />
-            ))}
-          </div>
-        </section>
-      ) : (
-        <div className="empty-state">Быстрых задач сейчас нет — остаются только более объемные</div>
-      )}
+          return (
+            <div
+              key={task.id}
+              className={`qw2-card ${isFirst ? "qw2-card--first" : ""}`}
+              onClick={() => onSelect?.(task)}
+            >
+              {/* Номер */}
+              <div className={`qw2-card__num ${isFirst ? "qw2-card__num--first" : ""}`}>
+                {index + 1}
+              </div>
 
-      {laterTasks.length > 0 && (
-        <section className="qw-section">
-          <div className="qw-section__header">
-            <h2 className="qw-section__title">Можно закрыть позже</h2>
-            <span className="qw-section__count">{laterTasks.length}</span>
-          </div>
-          <div className="qw-section__list">
-            {laterTasks.map((task) => (
-              <QuickTaskCard key={task.id} task={task} onSelect={onSelect} />
-            ))}
-          </div>
-        </section>
-      )}
+              <div className="qw2-card__body">
+                {/* Строка 1: молнии + предмет */}
+                <div className="qw2-card__top">
+                  <Lightning count={task.complexity} />
+                  <span className="qw2-card__subject" style={{ color }}>{task.subject}</span>
+                </div>
 
-      {quickTasks.length === 0 && heavyTasks.length > 0 && (
-        <section className="qw-section">
-          <div className="qw-section__header">
-            <h2 className="qw-section__title">Ближайшие большие задачи</h2>
-            <span className="qw-section__count">{heavyTasks.length}</span>
-          </div>
-          <div className="hwc-list">
-            {heavyTasks.map((task) => (
-              <HwCard key={task.id} hw={task} onSelect={onSelect} />
-            ))}
-          </div>
-        </section>
-      )}
+                {/* Описание */}
+                <p className="qw2-card__desc">{task.description}</p>
+
+                {/* Прогресс-бар времени */}
+                <div className="qw2-bar">
+                  <div className="qw2-bar__track">
+                    <div
+                      className="qw2-bar__fill"
+                      style={{ width: `${Math.max(progress.pct, 4)}%`, background: progress.color }}
+                    />
+                  </div>
+                  <span className="qw2-bar__label" style={{ color: progress.color }}>
+                    {task.dayDiff <= 0 ? "горит" : task.dayDiff === 1 ? "завтра" : `${task.dayDiff} дн.`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
