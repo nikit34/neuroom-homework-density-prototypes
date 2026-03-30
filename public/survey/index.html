@@ -252,7 +252,6 @@ textarea::placeholder{color:var(--text-dim)}
 <script>
 const GOOGLE_SCRIPT_URL = '';
 const APP_BASE = '/neuroom-homework-density-prototypes/';
-const TOTAL_Q = 10;
 
 // ══════════════════════════════════════
 // VARIANTS
@@ -267,114 +266,158 @@ const V = {
   quickwins: { key:'quickwins', label:'Quick Wins',             desc:'Автоматическая очередь: сначала лёгкое и срочное',       path:'quick-wins' },
 };
 
-function getWinner(qId, varA, varB) {
+// ══════════════════════════════════════
+// TOURNAMENT HELPERS
+// ══════════════════════════════════════
+// QF: 0=A, 1=B, 2=both advance, 3=both eliminated
+function getAdvancers(qId, varA, varB) {
   const a = answers[qId];
-  if (!a || a.choiceIndex === undefined) return varA;
-  return a.choiceIndex === 1 ? varB : varA;
+  if (!a || a.choiceIndex === undefined) return [varA];
+  switch (a.choiceIndex) {
+    case 0: return [varA];
+    case 1: return [varB];
+    case 2: return [varA, varB];
+    case 3: return [];
+    default: return [varA];
+  }
 }
-function getLoser(qId, varA, varB) {
-  const a = answers[qId];
-  if (!a || a.choiceIndex === undefined) return varB;
-  return a.choiceIndex === 1 ? varA : varB;
+function getMatchWinner(qId, a, b) {
+  const ans = answers[qId];
+  if (!ans || ans.choiceIndex === undefined) return a;
+  return ans.choiceIndex === 1 ? b : a;
+}
+
+// Build sequential 1v1 elimination for a pool
+function buildPoolElim(pool, prefix) {
+  if (pool.length <= 1) return { screens: [], winner: pool[0] || null };
+  const screens = [];
+  let rem = [...pool], mn = 1;
+  while (rem.length > 1) {
+    const a = rem[0], b = rem[1], qId = `${prefix}_m${mn}_q1`;
+    screens.push(
+      { id:`${prefix}_m${mn}_a`, type:'mockup', variant:'a', variantTitle:a.label, variantDesc:a.desc, instruction: mn===1?'Посмотри этот вариант':'Победитель — посмотри снова', path:a.path },
+      { id:`${prefix}_m${mn}_b`, type:'mockup', variant:'b', variantTitle:b.label, variantDesc:b.desc, instruction:'Сравни', path:b.path },
+      { id:qId, type:'choice', icon:'&#9876;&#65039;', number:0, total:0, text:'Кто проходит дальше?', choices:['А — '+a.label,'Б — '+b.label], required:true }
+    );
+    rem = [getMatchWinner(qId, a, b), ...rem.slice(2)];
+    mn++;
+  }
+  return { screens, winner: rem[0] };
 }
 
 // ══════════════════════════════════════
 // BRACKET BUILDERS
 // ══════════════════════════════════════
 function slot(v, cls) {
-  const icons = {'win':'&#10004;','lose':'&#10008;','auto':'&#9889;'};
+  const icons = {'win':'&#10004;','lose':'&#10008;','auto':'&#9889;','both':'&#10004;&#10004;'};
   return `<div class="bracket-slot bracket-slot--${cls}"><span class="bracket-slot-icon">${icons[cls]||''}</span><span class="bracket-slot-name">${v.label}</span></div>`;
 }
 
-function buildSemiBracketHtml() {
-  const w1 = getWinner('r1_q1', V.filter, V.kanban);
-  const l1 = getLoser('r1_q1', V.filter, V.kanban);
-  const w2 = getWinner('r2_q1', V.priority, V.calendar);
-  const l2 = getLoser('r2_q1', V.priority, V.calendar);
-  const w3 = getWinner('r3_q1', V.timeline, V.matrix);
-  const l3 = getLoser('r3_q1', V.timeline, V.matrix);
+function qfPairHtml(qId, varA, varB) {
+  const a = answers[qId];
+  const ci = a ? a.choiceIndex : undefined;
+  if (ci === 2) return `<div class="bracket-pair">${slot(varA,'win')}${slot(varB,'win')}</div><div style="text-align:center;font-size:10px;color:var(--success);font-weight:600">&#127881; Оба прошли!</div>`;
+  if (ci === 3) return `<div class="bracket-pair">${slot(varA,'lose')}${slot(varB,'lose')}</div><div style="text-align:center;font-size:10px;color:#ef4444;font-weight:600">&#128128; Оба выбыли</div>`;
+  const w = ci === 1 ? varB : varA, l = ci === 1 ? varA : varB;
+  return `<div class="bracket-pair">${slot(w,'win')}${slot(l,'lose')}</div>`;
+}
 
+function poolLabel(pool) {
+  if (pool.length === 0) return '<div style="text-align:center;font-size:11px;color:#ef4444;font-weight:600">&#128128; Нет участников — соперник без боя</div>';
+  if (pool.length === 1) return `<div class="bracket-next">&#9889; ${pool[0].label} проходит без боя</div>`;
+  if (pool.length === 2) return `<div class="bracket-next">&#9876;&#65039; ${pool[0].label} <span class="bracket-vs-label">vs</span> ${pool[1].label}</div>`;
+  return `<div class="bracket-next">&#9876;&#65039; ${pool.map(v=>v.label).join(' → ')} (серия матчей)</div>`;
+}
+
+function buildSemiBracketHtml() {
+  const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban), ...getAdvancers('r2_q1',V.priority,V.calendar)];
+  const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix), V.quickwins];
   return `
   <div class="bracket-tree">
     <div class="bracket-stage-label">&#127942; Результаты четвертьфиналов</div>
-
     <div class="bracket-half">
-      <div class="bracket-pair">${slot(w1,'win')}${slot(l1,'lose')}</div>
+      ${qfPairHtml('r1_q1',V.filter,V.kanban)}
       <div class="bracket-connector"></div>
-      <div class="bracket-pair">${slot(w2,'win')}${slot(l2,'lose')}</div>
+      ${qfPairHtml('r2_q1',V.priority,V.calendar)}
       <div class="bracket-connector-single"></div>
-      <div class="bracket-next">&#9876;&#65039; ПФ1: ${w1.label} <span class="bracket-vs-label">vs</span> ${w2.label}</div>
+      ${poolLabel(pool1)}
     </div>
-
     <div class="bracket-divider"></div>
-
     <div class="bracket-half">
-      <div class="bracket-pair">${slot(w3,'win')}${slot(l3,'lose')}</div>
+      ${qfPairHtml('r3_q1',V.timeline,V.matrix)}
       <div class="bracket-connector"></div>
       <div class="bracket-pair">${slot(V.quickwins,'auto')}<div class="bracket-slot" style="opacity:.15;border-style:dashed"><span class="bracket-slot-name" style="text-align:center;color:var(--text-dim)">авто</span></div></div>
       <div class="bracket-connector-single"></div>
-      <div class="bracket-next">&#9876;&#65039; ПФ2: ${w3.label} <span class="bracket-vs-label">vs</span> ${V.quickwins.label}</div>
+      ${poolLabel(pool2)}
     </div>
   </div>`;
 }
 
 function buildFinalBracketHtml() {
-  // QF results
-  const w1 = getWinner('r1_q1', V.filter, V.kanban);
-  const l1 = getLoser('r1_q1', V.filter, V.kanban);
-  const w2 = getWinner('r2_q1', V.priority, V.calendar);
-  const l2 = getLoser('r2_q1', V.priority, V.calendar);
-  const w3 = getWinner('r3_q1', V.timeline, V.matrix);
-  const l3 = getLoser('r3_q1', V.timeline, V.matrix);
-  // SF results
-  const sf1w = getWinner('s1_q1', w1, w2);
-  const sf1l = getLoser('s1_q1', w1, w2);
-  const sf2w = getWinner('s2_q1', w3, V.quickwins);
-  const sf2l = getLoser('s2_q1', w3, V.quickwins);
-
-  function cell(v, cls) {
-    return `<div class="bracket-cell bracket-cell--${cls}">${v.label}</div>`;
-  }
-
+  const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban), ...getAdvancers('r2_q1',V.priority,V.calendar)];
+  const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix), V.quickwins];
+  const sf1 = buildPoolElim(pool1, 's1');
+  const sf2 = buildPoolElim(pool2, 's2');
+  const finalists = [sf1.winner, sf2.winner].filter(Boolean);
+  const cell = (v,cls) => v ? `<div class="bracket-cell bracket-cell--${cls}">${v.label}</div>` : '';
+  const f1 = sf1.winner, f2 = sf2.winner;
+  let finalText = '';
+  if (finalists.length >= 2) finalText = `&#9876;&#65039; ${f1.label} vs ${f2.label}`;
+  else if (finalists.length === 1) finalText = `&#127942; ${finalists[0].label} — без боя!`;
+  else finalText = '&#128128; Нет финалистов';
   return `
   <div class="bracket-tree">
-    <div class="bracket-stage-label">&#127942; Турнирная сетка</div>
-    <div class="bracket-full">
-      <!-- QF column -->
-      <div class="bracket-col">
-        <div class="bracket-col-label">ЧФ</div>
-        ${cell(w1,'win')}${cell(l1,'lose')}
-        ${cell(w2,'win')}${cell(l2,'lose')}
-        ${cell(w3,'win')}${cell(l3,'lose')}
-        ${cell(V.quickwins,'auto')}
-        <div class="bracket-cell" style="opacity:0;min-height:0;padding:0;border:none"></div>
+    <div class="bracket-stage-label">&#127942; Путь к финалу</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="font-size:10px;color:var(--text-dim);width:24px;flex-shrink:0">ПФ1</div>
+        <div style="flex:1">${pool1.map((v,i) => cell(v, v===sf1.winner?'win':'lose')).join('')}</div>
+        <div style="font-size:12px">&#8594;</div>
+        <div>${sf1.winner ? cell(sf1.winner,'win') : '<span style="font-size:10px;color:#ef4444">—</span>'}</div>
       </div>
-      <!-- Lines QF→SF -->
-      <div class="bracket-lines">
-        <div class="bracket-line-pair"></div>
-        <div class="bracket-line-pair"></div>
-        <div class="bracket-line-pair"></div>
-        <div class="bracket-line-pair"></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="font-size:10px;color:var(--text-dim);width:24px;flex-shrink:0">ПФ2</div>
+        <div style="flex:1">${pool2.map((v,i) => cell(v, v===sf2.winner?'win':'lose')).join('')}</div>
+        <div style="font-size:12px">&#8594;</div>
+        <div>${sf2.winner ? cell(sf2.winner,'win') : '<span style="font-size:10px;color:#ef4444">—</span>'}</div>
       </div>
-      <!-- SF column -->
-      <div class="bracket-col">
-        <div class="bracket-col-label">ПФ</div>
-        <div style="flex:1"></div>
-        ${cell(sf1w,'win')}${cell(sf1l,'lose')}
-        <div style="flex:2"></div>
-        ${cell(sf2w,'win')}${cell(sf2l,'lose')}
-        <div style="flex:1"></div>
+      <div style="text-align:center;padding:6px 0">&#11015;</div>
+      <div class="bracket-cell bracket-cell--champ" style="text-align:center">${finalText}</div>
+    </div>
+  </div>`;
+}
+
+function buildFullTreeHtml(champion) {
+  const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban), ...getAdvancers('r2_q1',V.priority,V.calendar)];
+  const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix), V.quickwins];
+  const sf1 = buildPoolElim(pool1,'s1'), sf2 = buildPoolElim(pool2,'s2');
+  const cell = (v,cls) => `<div class="bracket-cell bracket-cell--${cls}" style="font-size:9px;padding:4px 6px;min-height:22px">${v.label}</div>`;
+  const allQF = [V.filter,V.kanban,V.priority,V.calendar,V.timeline,V.matrix,V.quickwins];
+  const advPool1 = new Set(pool1.map(v=>v.key)), advPool2 = new Set(pool2.map(v=>v.key));
+  const advSF = new Set([sf1.winner,sf2.winner].filter(Boolean).map(v=>v.key));
+  const champKey = champion ? champion.key : null;
+  function qfCell(v) {
+    const adv = advPool1.has(v.key)||advPool2.has(v.key);
+    return cell(v, adv ? (advSF.has(v.key) ? (v.key===champKey?'champ':'win') : 'win') : 'lose');
+  }
+  function sfCell(v) { return v ? cell(v, v.key===champKey?'champ':'win') : ''; }
+  return `
+  <div class="bracket-tree">
+    <div class="bracket-stage-label">&#127942; Полная турнирная сетка</div>
+    <div style="display:flex;flex-direction:column;gap:4px;font-size:10px">
+      <div style="display:flex;gap:4px;align-items:center;color:var(--text-dim);font-size:9px;font-weight:600"><div style="flex:2">ЧФ</div><div style="width:12px"></div><div style="flex:1">ПФ</div><div style="width:12px"></div><div style="flex:1">&#127942;</div></div>
+      <div style="display:flex;gap:4px;align-items:stretch">
+        <div style="flex:2;display:flex;flex-direction:column;gap:2px">${[V.filter,V.kanban,V.priority,V.calendar].map(v=>qfCell(v)).join('')}</div>
+        <div style="width:12px;display:flex;align-items:center;color:var(--text-dim)">&#8594;</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px">${pool1.filter(v=>advSF.has(v.key)).map(v=>sfCell(v)).join('')||'<div style="color:#ef4444;font-size:9px">—</div>'}</div>
+        <div style="width:12px;display:flex;align-items:center;color:var(--text-dim)">&#8594;</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">${champion?cell(champion,'champ'):'<div style="color:#ef4444;font-size:9px">—</div>'}</div>
       </div>
-      <!-- Lines SF→Final -->
-      <div class="bracket-lines">
-        <div class="bracket-line-pair"></div>
-        <div class="bracket-line-pair"></div>
-      </div>
-      <!-- Final column -->
-      <div class="bracket-col">
-        <div class="bracket-col-label">&#127942;</div>
-        <div style="flex:1"></div>
-        <div class="bracket-cell bracket-cell--champ">&#9876;&#65039; ${sf1w.label} vs ${sf2w.label}</div>
+      <div style="display:flex;gap:4px;align-items:stretch;margin-top:2px">
+        <div style="flex:2;display:flex;flex-direction:column;gap:2px">${[V.timeline,V.matrix,V.quickwins].map(v=>qfCell(v)).join('')}</div>
+        <div style="width:12px;display:flex;align-items:center;color:var(--text-dim)">&#8594;</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px">${pool2.filter(v=>advSF.has(v.key)).map(v=>sfCell(v)).join('')||'<div style="color:#ef4444;font-size:9px">—</div>'}</div>
+        <div style="width:12px"></div>
         <div style="flex:1"></div>
       </div>
     </div>
@@ -415,68 +458,89 @@ function enableIframeUnlock() {
 // BUILD SCREENS (dynamic tournament)
 // ══════════════════════════════════════
 function buildScreens() {
-  // Quarter-final winners
-  const w1 = getWinner('r1_q1', V.filter, V.kanban);
-  const w2 = getWinner('r2_q1', V.priority, V.calendar);
-  const w3 = getWinner('r3_q1', V.timeline, V.matrix);
-  const w4 = V.quickwins;
+  // Pools from QFs
+  const pool1 = [...getAdvancers('r1_q1', V.filter, V.kanban), ...getAdvancers('r2_q1', V.priority, V.calendar)];
+  const pool2 = [...getAdvancers('r3_q1', V.timeline, V.matrix), V.quickwins];
 
-  // Semi-final winners
-  const sf1 = getWinner('s1_q1', w1, w2);
-  const sf2 = getWinner('s2_q1', w3, w4);
+  // SF elimination
+  const sf1 = buildPoolElim(pool1, 's1');
+  const sf2 = buildPoolElim(pool2, 's2');
 
-  return [
-    // 0 - Welcome
+  // Final
+  const finalists = [sf1.winner, sf2.winner].filter(Boolean);
+  const fin = buildPoolElim(finalists, 'final');
+
+  // Semi intro description adapts to pool sizes
+  let semiDesc = 'Победители четвертьфиналов встречаются. Посмотри экраны заново и выбери.';
+  if (pool1.length > 2 || pool2.length > 2) semiDesc = 'Некоторые варианты прошли оба — будут дополнительные матчи!';
+  if (pool1.length === 0 || pool2.length <= 1) semiDesc = 'Кто-то выбыл, кто-то прошёл без боя. Посмотри, что получилось.';
+
+  // Auto-advance / no contenders screens for SF
+  const sf1Extra = [];
+  if (pool1.length === 0) sf1Extra.push({ id:'s1_empty', type:'round_intro', round:'Полуфинал 1', title:'Нет участников', desc:'Оба варианта выбыли в четвертьфиналах. Другая сторона сетки проходит в финал без боя.' });
+  else if (pool1.length === 1) sf1Extra.push({ id:'s1_auto', type:'round_intro', round:'Полуфинал 1', title:pool1[0].label+' — без боя!', desc:'Единственный выживший проходит в финал автоматически.' });
+
+  const sf2Extra = [];
+  if (pool2.length <= 1) {} // Quick Wins always in pool2, so pool2 >= 1
+
+  // Final intro
+  let finalDesc = 'Два лучших экрана. Какой станет чемпионом?';
+  if (finalists.length === 1) finalDesc = finalists[0].label + ' побеждает без финального боя! Соперников не осталось.';
+  else if (finalists.length === 0) finalDesc = 'Все варианты выбыли... Чемпиона нет!';
+
+  const all = [
+    // Welcome
     { id:'welcome', type:'welcome' },
 
-    // ── Quarter-final 1: List vs Board ──
-    { id:'r1_intro', type:'round_intro', round:'Четвертьфинал 1', title:'Список vs Доска', desc:'Простой список заданий или канбан-доска со столбцами по статусу. Посмотри оба и выбери.' },
+    // ── QF 1 ──
+    { id:'r1_intro', type:'round_intro', round:'Четвертьфинал 1', title:'Список vs Доска', desc:'Простой список или канбан-доска. Посмотри оба и выбери.' },
     { id:'r1_a', type:'mockup', variant:'a', variantTitle:V.filter.label, variantDesc:V.filter.desc, instruction:'Прокрути экран и посмотри', path:V.filter.path },
     { id:'r1_b', type:'mockup', variant:'b', variantTitle:V.kanban.label, variantDesc:V.kanban.desc, instruction:'Листай колонки и сравни', path:V.kanban.path },
-    { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:TOTAL_Q, text:'Где удобнее смотреть задания?', choices:['А — '+V.filter.label, 'Б — '+V.kanban.label, 'Оба нормально','Оба не понравились'], required:true },
+    { id:'r1_q1', type:'choice', icon:'&#129504;', number:0, total:0, text:'Где удобнее смотреть задания?', choices:['А — '+V.filter.label,'Б — '+V.kanban.label,'Оба нормально','Оба не понравились'], required:true },
 
-    // ── Quarter-final 2: Priority vs Calendar ──
-    { id:'r2_intro', type:'round_intro', round:'Четвертьфинал 2', title:'Приоритеты vs Календарь', desc:'Задания по важности или по дням недели. Посмотри оба и выбери.' },
+    // ── QF 2 ──
+    { id:'r2_intro', type:'round_intro', round:'Четвертьфинал 2', title:'Приоритеты vs Календарь', desc:'По важности или по дням недели. Посмотри оба и выбери.' },
     { id:'r2_a', type:'mockup', variant:'a', variantTitle:V.priority.label, variantDesc:V.priority.desc, instruction:'Прокрути экран и посмотри', path:V.priority.path },
     { id:'r2_b', type:'mockup', variant:'b', variantTitle:V.calendar.label, variantDesc:V.calendar.desc, instruction:'Прокрути и сравни', path:V.calendar.path },
-    { id:'r2_q1', type:'choice', icon:'&#128197;', number:2, total:TOTAL_Q, text:'Где проще найти нужное задание?', choices:['А — '+V.priority.label, 'Б — '+V.calendar.label, 'Одинаково','Оба неудобные'], required:true },
+    { id:'r2_q1', type:'choice', icon:'&#128197;', number:0, total:0, text:'Где проще найти нужное задание?', choices:['А — '+V.priority.label,'Б — '+V.calendar.label,'Одинаково','Оба неудобные'], required:true },
 
-    // ── Quarter-final 3: Timeline vs Matrix ──
-    { id:'r3_intro', type:'round_intro', round:'Четвертьфинал 3', title:'Таймлайн vs Таблица', desc:'Вертикальная линия времени или таблица «дни × предметы». Посмотри и выбери.' },
+    // ── QF 3 ──
+    { id:'r3_intro', type:'round_intro', round:'Четвертьфинал 3', title:'Таймлайн vs Таблица', desc:'Линия времени или таблица «дни × предметы». Посмотри и выбери.' },
     { id:'r3_a', type:'mockup', variant:'a', variantTitle:V.timeline.label, variantDesc:V.timeline.desc, instruction:'Прокрути экран и посмотри', path:V.timeline.path },
     { id:'r3_b', type:'mockup', variant:'b', variantTitle:V.matrix.label, variantDesc:V.matrix.desc, instruction:'Посмотри на таблицу', path:V.matrix.path },
-    { id:'r3_q1', type:'choice', icon:'&#128202;', number:3, total:TOTAL_Q, text:'Что помогает лучше понять, что делать?', choices:['А — '+V.timeline.label, 'Б — '+V.matrix.label, 'Одинаково','Оба запутывают'], required:true },
+    { id:'r3_q1', type:'choice', icon:'&#128202;', number:0, total:0, text:'Что помогает лучше понять, что делать?', choices:['А — '+V.timeline.label,'Б — '+V.matrix.label,'Одинаково','Оба запутывают'], required:true },
 
-    // ── Quarter-final 4: Quick Wins (bye — just preview) ──
-    { id:'r4_intro', type:'round_intro', round:'Четвертьфинал 4', title:'Умная очередь', desc:'Приложение само расставляет задания по порядку — от простых и срочных к сложным. Quick Wins автоматически проходит в полуфинал.' },
-    { id:'r4_qw', type:'mockup', variant:'a', variantTitle:V.quickwins.label, variantDesc:V.quickwins.desc, instruction:'Прокрути список — задания расставлены по порядку', path:V.quickwins.path },
-    { id:'qw_q1', type:'choice', icon:'&#9889;', number:4, total:TOTAL_Q, text:'Полезно, когда приложение подсказывает, с чего начать?', choices:['Да, очень — не надо думать','Немного помогает','Всё равно','Нет, сам(а) разберусь'], required:true },
+    // ── QF 4: Quick Wins (bye) ──
+    { id:'r4_intro', type:'round_intro', round:'Четвертьфинал 4', title:'Умная очередь', desc:'Quick Wins расставляет задания по порядку — от простых и срочных к сложным. Автоматически проходит в полуфинал.' },
+    { id:'r4_qw', type:'mockup', variant:'a', variantTitle:V.quickwins.label, variantDesc:V.quickwins.desc, instruction:'Прокрути — задания расставлены по порядку', path:V.quickwins.path },
+    { id:'qw_q1', type:'choice', icon:'&#9889;', number:0, total:0, text:'Полезно, когда приложение подсказывает, с чего начать?', choices:['Да, очень — не надо думать','Немного помогает','Всё равно','Нет, сам(а) разберусь'], required:true },
 
-    // ── Semi-final 1 ──
-    { id:'semi_intro', type:'round_intro', badgeClass:'round-badge--semi', round:'Полуфинал', title:'Лучшие против лучших', desc:'Победители четвертьфиналов встречаются. Посмотри оба экрана заново и выбери.', bracketBuilder:'semi' },
-    { id:'s1_a', type:'mockup', variant:'a', variantTitle:w1.label, variantDesc:w1.desc, instruction:'Победитель ЧФ-1 — посмотри заново', path:w1.path },
-    { id:'s1_b', type:'mockup', variant:'b', variantTitle:w2.label, variantDesc:w2.desc, instruction:'Победитель ЧФ-2 — сравни', path:w2.path },
-    { id:'s1_q1', type:'choice', icon:'&#9876;&#65039;', number:5, total:TOTAL_Q, text:'Кто проходит в финал?', choices:['А — '+w1.label, 'Б — '+w2.label], required:true },
-
-    // ── Semi-final 2 ──
-    { id:'s2_a', type:'mockup', variant:'a', variantTitle:w3.label, variantDesc:w3.desc, instruction:'Победитель ЧФ-3 — посмотри заново', path:w3.path },
-    { id:'s2_b', type:'mockup', variant:'b', variantTitle:w4.label, variantDesc:w4.desc, instruction:'Quick Wins — сравни', path:w4.path },
-    { id:'s2_q1', type:'choice', icon:'&#9876;&#65039;', number:6, total:TOTAL_Q, text:'Кто проходит в финал?', choices:['А — '+w3.label, 'Б — '+w4.label], required:true },
+    // ── Semi-finals ──
+    { id:'semi_intro', type:'round_intro', badgeClass:'round-badge--semi', round:'Полуфинал', title:'Лучшие против лучших', desc:semiDesc, bracketBuilder:'semi' },
+    ...sf1Extra,
+    ...sf1.screens,
+    ...sf2Extra,
+    ...sf2.screens,
 
     // ── Final ──
-    { id:'final_intro', type:'round_intro', badgeClass:'round-badge--final', round:'Финал', title:'Главный выбор', desc:'Два лучших экрана. Какой станет чемпионом?', bracketBuilder:'final' },
-    { id:'f_a', type:'mockup', variant:'a', variantTitle:sf1.label, variantDesc:sf1.desc, instruction:'Финалист А — посмотри внимательно', path:sf1.path },
-    { id:'f_b', type:'mockup', variant:'b', variantTitle:sf2.label, variantDesc:sf2.desc, instruction:'Финалист Б — сравни', path:sf2.path },
-    { id:'final_q1', type:'choice', icon:'&#127942;', number:7, total:TOTAL_Q, text:'Какой экран — чемпион?', choices:['А — '+sf1.label, 'Б — '+sf2.label], required:true },
-    { id:'final_q2', type:'textarea', icon:'&#128172;', number:8, total:TOTAL_Q, text:'Почему именно этот?', placeholder:'Мне больше всего нравится, потому что...', required:false },
+    { id:'final_intro', type:'round_intro', badgeClass:'round-badge--final', round:'Финал', title:'Главный выбор', desc:finalDesc, bracketBuilder: finalists.length >= 2 ? 'final' : null },
+    ...fin.screens,
+    ...(fin.winner ? [{ id:'final_q2', type:'textarea', icon:'&#128172;', number:0, total:0, text:'Почему именно этот?', placeholder:'Мне больше всего нравится, потому что...', required:false }] : []),
 
     // ── Overall ──
-    { id:'imp_q1', type:'multiselect', icon:'&#127775;', number:9, total:TOTAL_Q, text:'Что для тебя самое важное на экране с домашкой?', hint:'Можно выбрать несколько.', options:[{label:'Быстро найти нужное задание'},{label:'Видеть сроки и дедлайны'},{label:'Понимать статус (сдано / не сдано)'},{label:'Не запутаться, когда много заданий'},{label:'Видеть все предметы сразу'},{label:'Знать с чего начать'},{label:'Красивый и понятный вид'}], required:true, minSelect:1 },
-    { id:'f_q1', type:'multiselect', icon:'&#128161;', number:10, total:TOTAL_Q, text:'Чего не хватает на этих экранах?', hint:'Выбери всё важное.', options:[{label:'Напоминания о дедлайнах'},{label:'Оценка сложности задания'},{label:'Сколько времени займёт'},{label:'Комментарии от учителя'},{label:'Группировка по предмету'},{label:'Поиск по заданиям'},{label:'Прогресс за неделю'},{label:'Всего хватает',exclusive:true}], required:true, minSelect:1 },
+    { id:'imp_q1', type:'multiselect', icon:'&#127775;', number:0, total:0, text:'Что для тебя самое важное на экране с домашкой?', hint:'Можно выбрать несколько.', options:[{label:'Быстро найти нужное задание'},{label:'Видеть сроки и дедлайны'},{label:'Понимать статус (сдано / не сдано)'},{label:'Не запутаться, когда много заданий'},{label:'Видеть все предметы сразу'},{label:'Знать с чего начать'},{label:'Красивый и понятный вид'}], required:true, minSelect:1 },
+    { id:'miss_q1', type:'multiselect', icon:'&#128161;', number:0, total:0, text:'Чего не хватает на этих экранах?', hint:'Выбери всё важное.', options:[{label:'Напоминания о дедлайнах'},{label:'Оценка сложности задания'},{label:'Сколько времени займёт'},{label:'Комментарии от учителя'},{label:'Группировка по предмету'},{label:'Поиск по заданиям'},{label:'Прогресс за неделю'},{label:'Всего хватает',exclusive:true}], required:true, minSelect:1 },
 
     // Finish
     { id:'finish', type:'finish' },
   ];
+
+  // Number questions dynamically
+  let qIdx = 0;
+  const totalQ = all.filter(s=>['choice','textarea','multiselect'].includes(s.type)).length;
+  all.forEach(s => { if (['choice','textarea','multiselect'].includes(s.type)) { qIdx++; s.number = qIdx; s.total = totalQ; } });
+
+  return all;
 }
 
 // ══════════════════════════════════════
@@ -522,7 +586,7 @@ function render() {
       </div>
       <div class="welcome-pills">
         <div class="pill">&#9201; 5-7 минут</div>
-        <div class="pill">3 этапа + 10 вопросов</div>
+        <div class="pill">3 этапа + вопросы</div>
         <div class="pill">&#128274; анонимно</div>
       </div>`;
     nav.style.display = 'flex';
@@ -535,17 +599,39 @@ function render() {
   }
 
   if (s.type === 'finish') {
-    const champion = getWinner('final_q1',
-      getWinner('s1_q1', getWinner('r1_q1', V.filter, V.kanban), getWinner('r2_q1', V.priority, V.calendar)),
-      getWinner('s2_q1', getWinner('r3_q1', V.timeline, V.matrix), V.quickwins)
-    );
+    const screens = buildScreens();
+    const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban),...getAdvancers('r2_q1',V.priority,V.calendar)];
+    const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix),V.quickwins];
+    const sf1 = buildPoolElim(pool1,'s1'), sf2 = buildPoolElim(pool2,'s2');
+    const finalists = [sf1.winner,sf2.winner].filter(Boolean);
+    const fin = buildPoolElim(finalists,'final');
+    const champion = fin.winner;
+    const champName = champion ? champion.label : 'Нет чемпиона';
+    const shareText = encodeURIComponent('Я прошёл чемпионат экранов Neuroom! Мой чемпион: ' + champName + ' 🏆');
+    const shareUrl = encodeURIComponent(location.href.split('?')[0]);
+
     html += `
       <div class="finish-icon">&#127942;</div>
-      <div class="finish-title">Чемпион: ${champion.label}!</div>
-      <div class="finish-sub">Спасибо! Твои ответы помогут сделать экран заданий удобнее.</div>`;
+      <div class="finish-title">${champion ? 'Чемпион: '+champion.label+'!' : 'Чемпионат завершён!'}</div>
+      <div class="finish-sub">Спасибо! Твои ответы помогут сделать экран заданий удобнее.</div>
+      <div id="finishTree" style="margin-top:8px"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button onclick="shareResult('tg')" style="display:flex;align-items:center;gap:6px;padding:12px 18px;border-radius:12px;border:none;background:#2AABEE;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">&#9992;&#65039; Telegram</button>
+        <button onclick="shareResult('vk')" style="display:flex;align-items:center;gap:6px;padding:12px 18px;border-radius:12px;border:none;background:#4680C2;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">&#127760; VK</button>
+      </div>
+      <div style="margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;text-align:center">Хочешь попробовать Neuroom?</div>
+        <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:10px">Оставь свой Telegram — мы напишем, когда будет готово</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="tgHandle" placeholder="@username" style="flex:1;background:var(--input-bg);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:16px;font-family:inherit;padding:12px;outline:none;text-align:center;letter-spacing:0">
+          <button onclick="submitTgHandle()" id="tgSubmitBtn" style="padding:12px 16px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">Отправить</button>
+        </div>
+        <div id="tgSuccess" style="display:none;text-align:center;color:var(--success);font-size:13px;font-weight:600;margin-top:8px">&#10004; Записали! Напишем.</div>
+      </div>`;
     nav.style.display = 'none';
     html += '</div>';
     app.innerHTML = html;
+    document.getElementById('finishTree').innerHTML = buildFullTreeHtml(champion);
     launchConfetti();
     return;
   }
@@ -736,6 +822,47 @@ async function submitAnswers() {
 }
 function saveLocal(data) {
   const k = 'neuroom_hwdensity_survey';
+  const e = JSON.parse(localStorage.getItem(k)||'[]');
+  e.push(data);
+  localStorage.setItem(k, JSON.stringify(e));
+}
+
+// ══════════════════════════════════════
+// SHARE & TELEGRAM SIGNUP
+// ══════════════════════════════════════
+function shareResult(platform) {
+  const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban),...getAdvancers('r2_q1',V.priority,V.calendar)];
+  const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix),V.quickwins];
+  const sf1 = buildPoolElim(pool1,'s1'), sf2 = buildPoolElim(pool2,'s2');
+  const fin = buildPoolElim([sf1.winner,sf2.winner].filter(Boolean),'final');
+  const champName = fin.winner ? fin.winner.label : '???';
+  const text = 'Я прошёл чемпионат экранов Neuroom! Мой чемпион: ' + champName + ' \uD83C\uDFC6';
+  const url = location.href.split('?')[0];
+  let shareUrl = '';
+  if (platform === 'tg') shareUrl = 'https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(text);
+  else if (platform === 'vk') shareUrl = 'https://vk.com/share.php?url='+encodeURIComponent(url)+'&title='+encodeURIComponent(text);
+  // Log share event
+  logEvent('share_'+platform, champName);
+  window.open(shareUrl, '_blank');
+}
+
+function submitTgHandle() {
+  const input = document.getElementById('tgHandle');
+  const handle = (input.value||'').trim();
+  if (!handle) return;
+  logEvent('tg_signup', handle);
+  document.getElementById('tgSubmitBtn').disabled = true;
+  document.getElementById('tgSuccess').style.display = 'block';
+  input.disabled = true;
+}
+
+function logEvent(eventType, value) {
+  const data = { timestamp: new Date().toISOString(), event: eventType, value: value };
+  if (GOOGLE_SCRIPT_URL) {
+    try { fetch(GOOGLE_SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); } catch(e) {}
+  }
+  // Also save locally
+  const k = 'neuroom_hwdensity_events';
   const e = JSON.parse(localStorage.getItem(k)||'[]');
   e.push(data);
   localStorage.setItem(k, JSON.stringify(e));

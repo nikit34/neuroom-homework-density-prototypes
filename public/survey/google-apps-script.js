@@ -1,28 +1,24 @@
 // ============================================
-// Google Apps Script для UX-опроса: Экран заданий
+// Google Apps Script для UX-опроса: Экран заданий (чемпионат)
 // ============================================
 //
 // ИНСТРУКЦИЯ:
 // 1. Создай новую Google Таблицу (sheets.new)
-// 2. Переименуй первый лист в «HwDensity»
-// 3. Заголовки создадутся автоматически при первом ответе
-// 4. Открой Расширения → Apps Script
-// 5. Удали всё содержимое и вставь этот код
-// 6. Нажми «Развернуть» → «Новое развёртывание»
+// 2. Создай листы: «Answers», «Events»
+// 3. Открой Расширения → Apps Script
+// 4. Удали всё содержимое и вставь этот код
+// 5. Нажми «Развернуть» → «Новое развёртывание»
 //    - Тип: Веб-приложение
 //    - Выполнять от: Меня
 //    - Доступ: Все (включая анонимных)
-// 7. Скопируй URL развёртывания
-// 8. Вставь его в survey/index.html в строку GOOGLE_SCRIPT_URL = '...'
+// 6. Скопируй URL развёртывания
+// 7. Вставь его в survey/index.html в строку GOOGLE_SCRIPT_URL = '...'
 //
-
-// Столбцы:
-// Время | ЧФ1: Списки | ЧФ2: Время | ЧФ3: Доски | ЧФ4: Quick Wins |
-// ПФ1 | ПФ2 | Финал | Финал: почему | Важность | Чего не хватает
+// Лист «Answers» — ответы на опрос (столбцы создаются динамически)
+// Лист «Events» — события: шаринг (share_tg, share_vk), заявки (tg_signup)
 
 function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('HwDensity');
-
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   var data;
   try {
     data = JSON.parse(e.postData.contents);
@@ -32,18 +28,41 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+  // Events (share clicks, telegram signups)
+  if (data.event) {
+    var evSheet = ss.getSheetByName('Events');
+    if (!evSheet) { evSheet = ss.insertSheet('Events'); evSheet.appendRow(['Время', 'Событие', 'Значение']); }
+    evSheet.appendRow([
+      data.timestamp || new Date().toISOString(),
+      data.event || '',
+      data.value || '',
+    ]);
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Survey answers — store as JSON blob + key columns
+  var sheet = ss.getSheetByName('Answers');
+  if (!sheet) { sheet = ss.insertSheet('Answers'); sheet.appendRow(['Время','ЧФ1','ЧФ2','ЧФ3','QW','ПФ матчи','Финал','Финал: почему','Важность','Не хватает','Все данные (JSON)']); }
+
+  // Collect all semi/final match answers into one string
+  var sfMatches = [];
+  for (var key in data) {
+    if (key.match(/^(s1|s2|final)_m\d+_q1$/)) sfMatches.push(key + ': ' + data[key]);
+  }
+
   sheet.appendRow([
     data.timestamp || new Date().toISOString(),
     data.r1_q1 || '',
     data.r2_q1 || '',
     data.r3_q1 || '',
     data.qw_q1 || '',
-    data.s1_q1 || '',
-    data.s2_q1 || '',
-    data.final_q1 || '',
+    sfMatches.join('; ') || '',
     data.final_q2 || '',
     data.imp_q1 || '',
-    data.f_q1 || '',
+    data.miss_q1 || '',
+    JSON.stringify(data),
   ]);
 
   return ContentService
