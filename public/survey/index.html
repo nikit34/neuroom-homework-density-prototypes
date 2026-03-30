@@ -687,18 +687,10 @@ function render() {
       <div class="finish-title">${champion ? 'Чемпион: '+champion.label+'!' : 'Чемпионат завершён!'}</div>
       <div class="finish-sub">Спасибо! Твои ответы помогут сделать экран заданий удобнее.</div>
       <div id="finishTree" style="margin-top:8px"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+      <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-top:12px">Поделись результатом с друзьями:</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:6px">
         <button onclick="shareResult('tg')" style="display:flex;align-items:center;gap:6px;padding:12px 18px;border-radius:12px;border:none;background:#2AABEE;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">&#9992;&#65039; Telegram</button>
         <button onclick="shareResult('vk')" style="display:flex;align-items:center;gap:6px;padding:12px 18px;border-radius:12px;border:none;background:#4680C2;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">&#127760; VK</button>
-      </div>
-      <div style="margin-top:16px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px">
-        <div style="font-size:14px;font-weight:600;margin-bottom:8px;text-align:center">Хочешь участвовать в продуктовых исследованиях Neuroom?</div>
-        <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:10px">Оставь свой Telegram — мы напишем, когда понадобится твоё мнение</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="tgHandle" placeholder="@username" style="flex:1;background:var(--input-bg);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:16px;font-family:inherit;padding:12px;outline:none;text-align:center;letter-spacing:0">
-          <button onclick="submitTgHandle()" id="tgSubmitBtn" style="padding:12px 16px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">Отправить</button>
-        </div>
-        <div id="tgSuccess" style="display:none;text-align:center;color:var(--success);font-size:13px;font-weight:600;margin-top:8px">&#10004; Записали! Напишем.</div>
       </div>`;
     nav.style.display = 'none';
     html += '</div>';
