@@ -4,7 +4,7 @@ import { SUBJECTS } from "./mockData";
 import logoWordmark from "./assets/logo-wordmark.svg";
 import menuIcon from "./assets/icon-menu.svg";
 import VariantFigmaMobile from "./VariantFigmaMobile";
-import VariantChipsCollapse from "./VariantChipsCollapse";
+
 import VariantTimelineDashboard from "./VariantTimelineDashboard";
 import VariantPriorityInbox from "./VariantPriorityInbox";
 
@@ -18,7 +18,7 @@ const tabs = [
   { key: "figma", label: "Простой список", path: "/" },
   { key: "priority", label: "Priority Inbox", path: "/priority" },
 
-  { key: "chips-collapse", label: "Chips+Collapse", path: "/chips" },
+
   { key: "timeline-dashboard", label: "Timeline+Dash", path: "/timeline" },
   { key: "calendar", label: "Calendar Week", path: "/calendar" },
   { key: "kanban", label: "Kanban", path: "/kanban" },
@@ -30,7 +30,7 @@ const tabs = [
 function getActiveTab(pathname: string): string {
   if (pathname === "/priority") return "priority";
 
-  if (pathname === "/chips") return "chips-collapse";
+
   if (pathname === "/timeline") return "timeline-dashboard";
   if (pathname === "/calendar") return "calendar";
   if (pathname === "/kanban") return "kanban";
@@ -98,7 +98,7 @@ function App() {
             <Route path="/" element={<VariantFigmaMobile selectedSubjectId={selectedSubjectId} />} />
             <Route path="/priority" element={<VariantPriorityInbox selectedSubjectId={selectedSubjectId} />} />
 
-            <Route path="/chips" element={<VariantChipsCollapse selectedSubjectId={selectedSubjectId} />} />
+
             <Route path="/timeline" element={<VariantTimelineDashboard selectedSubjectId={selectedSubjectId} />} />
             <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} />} />
             <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} />} />

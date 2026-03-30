@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { HOMEWORK_LIST, type HomeworkItem } from "./mockData";
 import HwCard from "./HwCard";
 
-/* ── Variant: Priority Inbox ──
-   Секции по срочности: Просрочено → Сдать сегодня/завтра → Пересдача → Проверено Нейрумом → На проверке → Эта неделя → Позже → Сданные
+/* ── Variant: Priority Inbox (с collapse) ──
+   Секции по срочности + каждая секция сворачивается.
+   "Позже" и "Сданные" свёрнуты по умолчанию.
 */
 
 interface PriorityGroup {
@@ -58,17 +59,23 @@ function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
   return groups;
 }
 
+const DEFAULT_COLLAPSED: Record<string, boolean> = { later: true, done: true };
+
 export default function VariantPriorityInbox({
   selectedSubjectId = null,
 }: VariantPriorityInboxProps) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(DEFAULT_COLLAPSED);
+
   const groups = useMemo(() => {
     const filteredHomework =
       selectedSubjectId === null
         ? HOMEWORK_LIST
         : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId);
-
     return classifyIntoGroups(filteredHomework);
   }, [selectedSubjectId]);
+
+  const toggleCollapse = (key: string) =>
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
     <div className="variant">
@@ -76,19 +83,46 @@ export default function VariantPriorityInbox({
         <div className="empty-state">Нет заданий по выбранному предмету</div>
       )}
 
-      {groups.map((group) => (
-        <div key={group.key} className="pi-section">
-          <div className={`pi-section__header pi-section__header--${group.variant}`}>
-            <span className="pi-section__title">{group.title}</span>
-            <span className="pi-section__count">{group.items.length}</span>
+      {groups.map((group) => {
+        const isCollapsed = !!collapsed[group.key];
+        const alertCount = group.items.filter(
+          (h) => h.status === "missed" || h.status === "resend"
+        ).length;
+
+        return (
+          <div
+            key={group.key}
+            className={`collapse-group ${group.variant === "overdue" ? "collapse-group--overdue" : ""} ${group.variant === "done" ? "collapse-group--done" : ""}`}
+          >
+            <button
+              className={`collapse-header collapse-header--${group.variant}`}
+              onClick={() => toggleCollapse(group.key)}
+              type="button"
+            >
+              <div className="collapse-header__left">
+                <svg
+                  className={`collapse-chevron ${isCollapsed ? "" : "collapse-chevron--open"}`}
+                  width="16" height="16" viewBox="0 0 16 16" fill="none"
+                >
+                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="collapse-header__title">{group.title}</span>
+                <span className="collapse-header__count">{group.items.length}</span>
+              </div>
+              {alertCount > 0 && (
+                <span className="collapse-header__alert">{alertCount} !</span>
+              )}
+            </button>
+            {!isCollapsed && (
+              <div className="collapse-body">
+                {group.items.map((hw) => (
+                  <HwCard key={hw.id} hw={hw} />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="pi-section__list">
-            {group.items.map((hw) => (
-              <HwCard key={hw.id} hw={hw} />
-            ))}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
