@@ -7,7 +7,7 @@ import HwDetailModal from "./HwDetailModal";
 import VariantFigmaMobile from "./VariantFigmaMobile";
 import VariantTimelineDashboard from "./VariantTimelineDashboard";
 import VariantPriorityInbox from "./VariantPriorityInbox";
-import VariantCalendarWeek from "./VariantCalendarWeek";
+
 import VariantKanban from "./VariantKanban";
 import VariantMatrix from "./VariantMatrix";
 import VariantProgressTracker from "./VariantProgressTracker";
@@ -17,7 +17,7 @@ const tabs = [
   { key: "figma", label: "Список+фильтр", path: "/" },
   { key: "priority", label: "Priority Inbox", path: "/priority" },
   { key: "timeline-dashboard", label: "Timeline", path: "/timeline" },
-  { key: "calendar", label: "Calendar Week", path: "/calendar" },
+
   { key: "kanban", label: "Kanban", path: "/kanban" },
   { key: "matrix", label: "Matrix", path: "/matrix" },
   { key: "progress", label: "Progress", path: "/progress" },
@@ -27,7 +27,7 @@ const tabs = [
 function getActiveTab(pathname: string): string {
   if (pathname === "/priority") return "priority";
   if (pathname === "/timeline") return "timeline-dashboard";
-  if (pathname === "/calendar") return "calendar";
+
   if (pathname === "/kanban") return "kanban";
   if (pathname === "/matrix") return "matrix";
   if (pathname === "/progress") return "progress";
@@ -99,7 +99,7 @@ function App() {
             <Route path="/" element={<VariantFigmaMobile selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/priority" element={<VariantPriorityInbox onSelect={setSelectedHw} />} />
             <Route path="/timeline" element={<VariantTimelineDashboard onSelect={setSelectedHw} />} />
-            <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+
             <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
