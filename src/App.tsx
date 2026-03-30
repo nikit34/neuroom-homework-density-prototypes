@@ -42,7 +42,8 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [selectedHw, setSelectedHw] = useState<HomeworkItem | null>(null);
 
-  const hideFilter = activeTab === "priority" || activeTab === "timeline-dashboard";
+  const path = location.pathname;
+  const hideFilter = path === "/priority" || path === "/timeline" || activeTab === "priority" || activeTab === "timeline-dashboard";
 
   return (
     <div className="proto-shell">
