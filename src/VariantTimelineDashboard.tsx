@@ -5,7 +5,6 @@ import HwCard from "./HwCard";
 /* ── Variant: Timeline ── */
 
 interface VariantTimelineDashboardProps {
-  selectedSubjectId?: number | null;
   onSelect?: (hw: HomeworkItem) => void;
 }
 
@@ -31,25 +30,17 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export default function VariantTimelineDashboard({
-  selectedSubjectId = null,
   onSelect,
 }: VariantTimelineDashboardProps) {
   const [showDone, setShowDone] = useState(false);
-  const visibleHomework = useMemo(
-    () =>
-      selectedSubjectId === null
-        ? HOMEWORK_LIST
-        : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId),
-    [selectedSubjectId],
-  );
 
   const doneCount = useMemo(
-    () => visibleHomework.filter((h) => h.status === "done").length,
-    [visibleHomework],
+    () => HOMEWORK_LIST.filter((h) => h.status === "done").length,
+    [],
   );
 
   const dateGroups = useMemo(() => {
-    const list = visibleHomework.filter((h) => (showDone ? true : h.status !== "done"));
+    const list = HOMEWORK_LIST.filter((h) => (showDone ? true : h.status !== "done"));
     const map = new Map<string, { label: string; date: Date; items: HomeworkItem[] }>();
     for (const hw of list) {
       const key = formatDateKey(hw.deadlineAt);

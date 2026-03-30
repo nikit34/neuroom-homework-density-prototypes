@@ -42,7 +42,7 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [selectedHw, setSelectedHw] = useState<HomeworkItem | null>(null);
 
-  const isPriority = activeTab === "priority";
+  const hideFilter = activeTab === "priority" || activeTab === "timeline-dashboard";
 
   return (
     <div className="proto-shell">
@@ -69,7 +69,7 @@ function App() {
 
         <div className="app-header">
           <h1 className="app-title">Задания</h1>
-          {!isPriority && (
+          {!hideFilter && (
             <label className="app-subject-filter">
               <select
                 className="app-select"
@@ -97,7 +97,7 @@ function App() {
           <Routes>
             <Route path="/" element={<VariantFigmaMobile selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/priority" element={<VariantPriorityInbox onSelect={setSelectedHw} />} />
-            <Route path="/timeline" element={<VariantTimelineDashboard selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/timeline" element={<VariantTimelineDashboard onSelect={setSelectedHw} />} />
             <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
