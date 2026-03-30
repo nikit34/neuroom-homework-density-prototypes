@@ -107,6 +107,8 @@ textarea::placeholder{color:var(--text-dim)}
 
 /* ── Round intro ── */
 .round-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
+.round-badge--semi{background:linear-gradient(135deg,#ec4899,#f59e0b)}
+.round-badge--final{background:linear-gradient(135deg,#f59e0b,#ef4444)}
 .round-title{font-size:20px;font-weight:800;line-height:1.3;text-align:center}
 .round-desc{font-size:14px;color:var(--text-dim);text-align:center;line-height:1.6}
 .reveal-text{font-size:16px;color:var(--text);text-align:center;line-height:1.7;font-weight:500;min-height:60px}
@@ -144,6 +146,16 @@ textarea::placeholder{color:var(--text-dim)}
 }
 .iframe-loader.hidden{opacity:0;pointer-events:none}
 .mockup-instruction{text-align:center;font-size:14px;font-weight:600;color:var(--accent-light);margin-bottom:6px;padding:8px 14px;background:rgba(124,92,252,.1);border:1.5px solid rgba(124,92,252,.25);border-radius:12px}
+
+/* ── Bracket visualization ── */
+.bracket{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.bracket-match{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.bracket-match.winner{border-color:var(--accent);background:rgba(124,92,252,.1)}
+.bracket-vs{color:var(--text-dim);font-size:11px;font-weight:600;flex-shrink:0}
+.bracket-name{font-size:13px;font-weight:600;flex:1}
+.bracket-name.dim{color:var(--text-dim);font-weight:400}
+.bracket-icon{font-size:16px;flex-shrink:0}
+.bracket-label{font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:4px 0}
 
 /* ── Sending overlay ── */
 .sending-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,26,.85);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px}
@@ -212,22 +224,40 @@ textarea::placeholder{color:var(--text-dim)}
 
 <script>
 const GOOGLE_SCRIPT_URL = '';
-
-// Base URL of the app (matches vite.config.ts base)
 const APP_BASE = '/neuroom-homework-density-prototypes/';
+const TOTAL_Q = 10;
 
+// ══════════════════════════════════════
+// VARIANTS
+// ══════════════════════════════════════
+const V = {
+  filter:    { key:'filter',    label:'Простой список',        desc:'Все задания подряд с фильтром по предмету',              path:'' },
+  priority:  { key:'priority',  label:'Список по приоритету',  desc:'Задания разбиты по важности: сначала горящие',           path:'priority' },
+  timeline:  { key:'timeline',  label:'Таймлайн',              desc:'Вертикальная линия времени по дням',                     path:'timeline' },
+  calendar:  { key:'calendar',  label:'Календарь на неделю',   desc:'Дни недели с заданиями в каждом',                        path:'calendar' },
+  kanban:    { key:'kanban',    label:'Канбан-доска',           desc:'Столбцы по статусу: активные, на проверке, сдано',       path:'kanban' },
+  matrix:    { key:'matrix',    label:'Таблица',                desc:'Строки = дни, столбцы = предметы, ячейки = задания',     path:'matrix' },
+  quickwins: { key:'quickwins', label:'Quick Wins',             desc:'Автоматическая очередь: сначала лёгкое и срочное',       path:'quick-wins' },
+};
+
+function getWinner(qId, varA, varB) {
+  const a = answers[qId];
+  if (!a || a.choiceIndex === undefined) return varA;
+  return a.choiceIndex === 1 ? varB : varA;
+}
+
+// ══════════════════════════════════════
+// IFRAME BUILDER
+// ══════════════════════════════════════
 function iframeMockup(path, iframeId) {
   const src = APP_BASE + path + (path.includes('?') ? '&' : '?') + 'embed=1';
   return `
   <div class="iframe-wrap">
     <div class="iframe-loader" id="loader-${iframeId}">Загрузка экрана...</div>
-    <iframe id="${iframeId}" src="${src}" loading="lazy" onload="document.getElementById('loader-${iframeId}').classList.add('hidden');enableIframeUnlock('${iframeId}')"></iframe>
+    <iframe id="${iframeId}" src="${src}" loading="lazy" onload="document.getElementById('loader-${iframeId}').classList.add('hidden');enableIframeUnlock()"></iframe>
   </div>`;
 }
 
-// ══════════════════════════════════════
-// WORD-BY-WORD REVEAL
-// ══════════════════════════════════════
 function revealWords(el, text, onDone) {
   const words = text.split(' ');
   el.innerHTML = words.map(w => `<span class="rw">${w} </span>`).join('');
@@ -242,54 +272,77 @@ function revealWords(el, text, onDone) {
   setTimeout(next, 300);
 }
 
-// Unlock Next button after viewing iframe
-function enableIframeUnlock(iframeId) {
-  setTimeout(() => {
-    document.getElementById('btnNext').disabled = false;
-  }, 2500);
+function enableIframeUnlock() {
+  setTimeout(() => { document.getElementById('btnNext').disabled = false; }, 2500);
 }
 
 // ══════════════════════════════════════
-// SCREENS
+// BUILD SCREENS (dynamic tournament)
 // ══════════════════════════════════════
-const screens = [
-  // 0 - Welcome
-  { id:'welcome', type:'welcome' },
+function buildScreens() {
+  // Quarter-final winners
+  const w1 = getWinner('r1_q1', V.filter, V.priority);
+  const w2 = getWinner('r2_q1', V.timeline, V.calendar);
+  const w3 = getWinner('r3_q1', V.kanban, V.matrix);
+  const w4 = V.quickwins;
 
-  // ── Round 1: Lists ──
-  { id:'r1_intro', type:'round_intro', round:'Раунд 1 из 4', title:'Списки заданий', desc:'Сейчас ты увидишь два способа показать задания списком. Прокрути каждый экран и посмотри, как устроено.' },
-  { id:'r1_filter', type:'mockup', variant:'a', variantTitle:'Простой список', variantDesc:'Все задания подряд с фильтром по предмету', instruction:'Прокрути экран и посмотри', path:'' },
-  { id:'r1_priority', type:'mockup', variant:'b', variantTitle:'Список по приоритету', variantDesc:'Задания разбиты по важности: сначала горящие', instruction:'Прокрути и сравни с предыдущим', path:'priority' },
-  { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:10, text:'Какой список удобнее?', choices:['А — Простой список с фильтром','Б — Список по приоритету','Оба нормально','Оба не понравились'], required:true },
-  { id:'r1_q2', type:'textarea', icon:'&#128172;', number:2, total:10, text:'Почему выбрал(а) именно этот?', placeholder:'Мне удобнее, потому что...', required:false },
+  // Semi-final winners
+  const sf1 = getWinner('s1_q1', w1, w2);
+  const sf2 = getWinner('s2_q1', w3, w4);
 
-  // ── Round 2: Calendar & Time ──
-  { id:'r2_intro', type:'round_intro', round:'Раунд 2 из 4', title:'Время и календарь', desc:'Теперь посмотри, как задания можно показать на временной шкале и в календаре.' },
-  { id:'r2_timeline', type:'mockup', variant:'a', variantTitle:'Таймлайн', variantDesc:'Вертикальная линия времени по дням', instruction:'Прокрути экран и посмотри', path:'timeline' },
-  { id:'r2_calendar', type:'mockup', variant:'b', variantTitle:'Календарь на неделю', variantDesc:'Дни недели с заданиями в каждом', instruction:'Прокрути и сравни', path:'calendar' },
-  { id:'r2_q1', type:'choice', icon:'&#128197;', number:3, total:10, text:'Где проще найти нужное задание?', choices:['А — Таймлайн','Б — Календарь на неделю','Одинаково','Оба неудобные'], required:true },
-  { id:'r2_q2', type:'textarea', icon:'&#128221;', number:4, total:10, text:'Что именно удобнее или понятнее?', placeholder:'Мне понятнее, когда...', required:false },
+  return [
+    // 0 - Welcome
+    { id:'welcome', type:'welcome' },
 
-  // ── Round 3: Boards ──
-  { id:'r3_intro', type:'round_intro', round:'Раунд 3 из 4', title:'Доски и таблицы', desc:'А здесь задания показаны как доска со столбцами и как таблица «дни × предметы».' },
-  { id:'r3_kanban', type:'mockup', variant:'a', variantTitle:'Канбан-доска', variantDesc:'Столбцы по статусу: активные, на проверке, сдано', instruction:'Листай колонки влево-вправо', path:'kanban' },
-  { id:'r3_matrix', type:'mockup', variant:'b', variantTitle:'Таблица «Дни × Предметы»', variantDesc:'Строки = дни, столбцы = предметы, ячейки = задания', instruction:'Посмотри на таблицу', path:'matrix' },
-  { id:'r3_q1', type:'choice', icon:'&#128202;', number:5, total:10, text:'Что помогает лучше понять, что делать?', choices:['А — Канбан-доска','Б — Таблица (дни × предметы)','Одинаково','Оба запутывают'], required:true },
-  { id:'r3_q2', type:'textarea', icon:'&#128221;', number:6, total:10, text:'Почему именно этот?', placeholder:'Этот удобнее, потому что...', required:false },
+    // ── Quarter-final 1: Lists ──
+    { id:'r1_intro', type:'round_intro', round:'Четвертьфинал 1', title:'Списки заданий', desc:'Два способа показать задания списком. Прокрути каждый экран и выбери, какой удобнее.' },
+    { id:'r1_filter', type:'mockup', variant:'a', variantTitle:V.filter.label, variantDesc:V.filter.desc, instruction:'Прокрути экран и посмотри', path:V.filter.path },
+    { id:'r1_priority', type:'mockup', variant:'b', variantTitle:V.priority.label, variantDesc:V.priority.desc, instruction:'Прокрути и сравни с предыдущим', path:V.priority.path },
+    { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:TOTAL_Q, text:'Какой список удобнее?', choices:['А — '+V.filter.label, 'Б — '+V.priority.label, 'Оба нормально','Оба не понравились'], required:true },
 
-  // ── Round 4: Quick Wins ──
-  { id:'r4_intro', type:'round_intro', round:'Раунд 4 из 4', title:'Умная очередь', desc:'Последний вариант: приложение само подсказывает, в каком порядке делать задания — от простых и срочных к сложным.' },
-  { id:'r4_qw', type:'mockup', variant:'a', variantTitle:'Quick Wins — с чего начать', variantDesc:'Автоматическая очередь: сначала лёгкое и срочное', instruction:'Прокрути список — задания расставлены по порядку', path:'quick-wins' },
-  { id:'qw_q1', type:'choice', icon:'&#9889;', number:7, total:10, text:'Полезно, когда приложение подсказывает, с чего начать?', choices:['Да, очень — не надо думать','Немного помогает','Всё равно','Нет, сам(а) разберусь'], required:true },
+    // ── Quarter-final 2: Time ──
+    { id:'r2_intro', type:'round_intro', round:'Четвертьфинал 2', title:'Время и календарь', desc:'Задания на временной шкале или в календаре. Посмотри оба и выбери.' },
+    { id:'r2_timeline', type:'mockup', variant:'a', variantTitle:V.timeline.label, variantDesc:V.timeline.desc, instruction:'Прокрути экран и посмотри', path:V.timeline.path },
+    { id:'r2_calendar', type:'mockup', variant:'b', variantTitle:V.calendar.label, variantDesc:V.calendar.desc, instruction:'Прокрути и сравни', path:V.calendar.path },
+    { id:'r2_q1', type:'choice', icon:'&#128197;', number:2, total:TOTAL_Q, text:'Где проще найти нужное задание?', choices:['А — '+V.timeline.label, 'Б — '+V.calendar.label, 'Одинаково','Оба неудобные'], required:true },
 
-  // ── Overall ──
-  { id:'imp_q1', type:'multiselect', icon:'&#127775;', number:8, total:10, text:'Что для тебя самое важное на экране с домашкой?', hint:'Можно выбрать несколько.', options:[{label:'Быстро найти нужное задание'},{label:'Видеть сроки и дедлайны'},{label:'Понимать статус (сдано / не сдано)'},{label:'Не запутаться, когда много заданий'},{label:'Видеть все предметы сразу'},{label:'Знать с чего начать'},{label:'Красивый и понятный вид'}], required:true, minSelect:1 },
-  { id:'top_q1', type:'multiselect', icon:'&#127942;', number:9, total:10, text:'Выбери варианты, которые хочешь видеть в приложении', hint:'Можно выбрать от 1 до 3.', options:[{label:'Простой список (с фильтром)'},{label:'Список по приоритету'},{label:'Таймлайн'},{label:'Календарь на неделю'},{label:'Канбан-доска'},{label:'Таблица (дни × предметы)'},{label:'Quick Wins (умная очередь)'}], required:true, minSelect:1, maxSelect:3 },
-  { id:'f_q1', type:'multiselect', icon:'&#128161;', number:10, total:10, text:'Чего не хватает на этих экранах?', hint:'Выбери всё важное.', options:[{label:'Напоминания о дедлайнах'},{label:'Оценка сложности задания'},{label:'Сколько времени займёт'},{label:'Комментарии от учителя'},{label:'Группировка по предмету'},{label:'Поиск по заданиям'},{label:'Прогресс за неделю'},{label:'Всего хватает',exclusive:true}], required:true, minSelect:1 },
+    // ── Quarter-final 3: Boards ──
+    { id:'r3_intro', type:'round_intro', round:'Четвертьфинал 3', title:'Доски и таблицы', desc:'Доска со столбцами или таблица «дни × предметы». Посмотри и выбери.' },
+    { id:'r3_kanban', type:'mockup', variant:'a', variantTitle:V.kanban.label, variantDesc:V.kanban.desc, instruction:'Листай колонки влево-вправо', path:V.kanban.path },
+    { id:'r3_matrix', type:'mockup', variant:'b', variantTitle:V.matrix.label, variantDesc:V.matrix.desc, instruction:'Посмотри на таблицу', path:V.matrix.path },
+    { id:'r3_q1', type:'choice', icon:'&#128202;', number:3, total:TOTAL_Q, text:'Что помогает лучше понять, что делать?', choices:['А — '+V.kanban.label, 'Б — '+V.matrix.label, 'Одинаково','Оба запутывают'], required:true },
 
-  // Finish
-  { id:'finish', type:'finish' },
-];
+    // ── Quarter-final 4: Quick Wins (bye — just preview) ──
+    { id:'r4_intro', type:'round_intro', round:'Четвертьфинал 4', title:'Умная очередь', desc:'Приложение само расставляет задания по порядку — от простых и срочных к сложным. Quick Wins автоматически проходит в полуфинал.' },
+    { id:'r4_qw', type:'mockup', variant:'a', variantTitle:V.quickwins.label, variantDesc:V.quickwins.desc, instruction:'Прокрути список — задания расставлены по порядку', path:V.quickwins.path },
+    { id:'qw_q1', type:'choice', icon:'&#9889;', number:4, total:TOTAL_Q, text:'Полезно, когда приложение подсказывает, с чего начать?', choices:['Да, очень — не надо думать','Немного помогает','Всё равно','Нет, сам(а) разберусь'], required:true },
+
+    // ── Semi-final 1 ──
+    { id:'semi_intro', type:'round_intro', badgeClass:'round-badge--semi', round:'Полуфинал', title:'Лучшие против лучших', desc:'Победители четвертьфиналов встречаются. Посмотри оба экрана заново и выбери.' },
+    { id:'s1_a', type:'mockup', variant:'a', variantTitle:w1.label, variantDesc:w1.desc, instruction:'Победитель ЧФ-1 — посмотри заново', path:w1.path },
+    { id:'s1_b', type:'mockup', variant:'b', variantTitle:w2.label, variantDesc:w2.desc, instruction:'Победитель ЧФ-2 — сравни', path:w2.path },
+    { id:'s1_q1', type:'choice', icon:'&#9876;&#65039;', number:5, total:TOTAL_Q, text:'Кто проходит в финал?', choices:['А — '+w1.label, 'Б — '+w2.label], required:true },
+
+    // ── Semi-final 2 ──
+    { id:'s2_a', type:'mockup', variant:'a', variantTitle:w3.label, variantDesc:w3.desc, instruction:'Победитель ЧФ-3 — посмотри заново', path:w3.path },
+    { id:'s2_b', type:'mockup', variant:'b', variantTitle:w4.label, variantDesc:w4.desc, instruction:'Quick Wins — сравни', path:w4.path },
+    { id:'s2_q1', type:'choice', icon:'&#9876;&#65039;', number:6, total:TOTAL_Q, text:'Кто проходит в финал?', choices:['А — '+w3.label, 'Б — '+w4.label], required:true },
+
+    // ── Final ──
+    { id:'final_intro', type:'round_intro', badgeClass:'round-badge--final', round:'Финал', title:'Главный выбор', desc:'Два лучших экрана. Какой станет чемпионом?' },
+    { id:'f_a', type:'mockup', variant:'a', variantTitle:sf1.label, variantDesc:sf1.desc, instruction:'Финалист А — посмотри внимательно', path:sf1.path },
+    { id:'f_b', type:'mockup', variant:'b', variantTitle:sf2.label, variantDesc:sf2.desc, instruction:'Финалист Б — сравни', path:sf2.path },
+    { id:'final_q1', type:'choice', icon:'&#127942;', number:7, total:TOTAL_Q, text:'Какой экран — чемпион?', choices:['А — '+sf1.label, 'Б — '+sf2.label], required:true },
+    { id:'final_q2', type:'textarea', icon:'&#128172;', number:8, total:TOTAL_Q, text:'Почему именно этот?', placeholder:'Мне больше всего нравится, потому что...', required:false },
+
+    // ── Overall ──
+    { id:'imp_q1', type:'multiselect', icon:'&#127775;', number:9, total:TOTAL_Q, text:'Что для тебя самое важное на экране с домашкой?', hint:'Можно выбрать несколько.', options:[{label:'Быстро найти нужное задание'},{label:'Видеть сроки и дедлайны'},{label:'Понимать статус (сдано / не сдано)'},{label:'Не запутаться, когда много заданий'},{label:'Видеть все предметы сразу'},{label:'Знать с чего начать'},{label:'Красивый и понятный вид'}], required:true, minSelect:1 },
+    { id:'f_q1', type:'multiselect', icon:'&#128161;', number:10, total:TOTAL_Q, text:'Чего не хватает на этих экранах?', hint:'Выбери всё важное.', options:[{label:'Напоминания о дедлайнах'},{label:'Оценка сложности задания'},{label:'Сколько времени займёт'},{label:'Комментарии от учителя'},{label:'Группировка по предмету'},{label:'Поиск по заданиям'},{label:'Прогресс за неделю'},{label:'Всего хватает',exclusive:true}], required:true, minSelect:1 },
+
+    // Finish
+    { id:'finish', type:'finish' },
+  ];
+}
 
 // ══════════════════════════════════════
 // STATE
@@ -303,15 +356,14 @@ let halfwayShown = false;
 // RENDER
 // ══════════════════════════════════════
 function render() {
+  const screens = buildScreens();
   const app = document.getElementById('app');
   const s = screens[current];
   const nav = document.getElementById('nav');
 
-  // Progress
   const pct = s.type === 'finish' ? 100 : s.type === 'welcome' ? 0 : (current / (screens.length-1) * 100);
   document.getElementById('progressBar').style.width = pct + '%';
 
-  // Halfway
   if (current === Math.floor(screens.length/2) && !halfwayShown) {
     halfwayShown = true;
     const t = document.getElementById('halfwayToast'); t.classList.add('show');
@@ -324,16 +376,18 @@ function render() {
 
   if (s.type === 'welcome') {
     html += `
-      <div class="welcome-icon">&#128203;</div>
-      <div class="welcome-title">Посмотри 7 вариантов экрана «Задания» и выбери, какой нравится больше</div>
+      <div class="welcome-icon">&#127942;</div>
+      <div class="welcome-title">Чемпионат экранов: найди лучший способ смотреть задания</div>
       <div class="welcome-sub">
-        В каждом раунде — два экрана для сравнения.<br><br>
-        Посмотри оба, потом ответь на вопросы.<br>
+        7 вариантов экрана «Задания» соревнуются между собой.<br><br>
+        <strong style="color:var(--accent-light)">Четвертьфиналы</strong> — сравни пары<br>
+        <strong style="color:#ec4899">Полуфиналы</strong> — победители встречаются<br>
+        <strong style="color:#f59e0b">Финал</strong> — выбери чемпиона<br><br>
         Правильных ответов нет — нам важно твоё мнение.
       </div>
       <div class="welcome-pills">
-        <div class="pill">&#9201; 5 минут</div>
-        <div class="pill">4 раунда + 10 вопросов</div>
+        <div class="pill">&#9201; 5-7 минут</div>
+        <div class="pill">3 этапа + 10 вопросов</div>
         <div class="pill">&#128274; анонимно</div>
       </div>`;
     nav.style.display = 'flex';
@@ -346,9 +400,13 @@ function render() {
   }
 
   if (s.type === 'finish') {
+    const champion = getWinner('final_q1',
+      getWinner('s1_q1', getWinner('r1_q1', V.filter, V.priority), getWinner('r2_q1', V.timeline, V.calendar)),
+      getWinner('s2_q1', getWinner('r3_q1', V.kanban, V.matrix), V.quickwins)
+    );
     html += `
-      <div class="finish-icon">&#127881;</div>
-      <div class="finish-title">Готово!</div>
+      <div class="finish-icon">&#127942;</div>
+      <div class="finish-title">Чемпион: ${champion.label}!</div>
       <div class="finish-sub">Спасибо! Твои ответы помогут сделать экран заданий удобнее.</div>`;
     nav.style.display = 'none';
     html += '</div>';
@@ -358,9 +416,10 @@ function render() {
   }
 
   if (s.type === 'round_intro') {
+    const badgeCls = s.badgeClass ? ' ' + s.badgeClass : '';
     html += `
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;text-align:center">
-        <div class="round-badge">${s.round}</div>
+        <div class="round-badge${badgeCls}">${s.round}</div>
         <div class="round-title">${s.title}</div>
         <div class="reveal-text" id="revealTarget"></div>
       </div>`;
@@ -388,7 +447,6 @@ function render() {
       </div>
     </div>`;
     html += `<div class="mockup-instruction">&#11015; ${s.instruction}</div>`;
-
     const iframeId = 'iframe-' + s.id;
     html += iframeMockup(s.path, iframeId);
 
@@ -446,6 +504,7 @@ function onInput(id) {
   updateNextBtn();
 }
 function onChoice(id, i) {
+  const screens = buildScreens();
   const s = screens.find(s=>s.id===id);
   if (!answers[id]) answers[id] = {};
   answers[id].choiceIndex = i;
@@ -453,6 +512,7 @@ function onChoice(id, i) {
   render();
 }
 function onMulti(id, i) {
+  const screens = buildScreens();
   const s = screens.find(s=>s.id===id);
   if (!answers[id]) answers[id] = {selected:[]};
   if (!answers[id].selected) answers[id].selected = [];
@@ -487,10 +547,12 @@ function isAnswered(s) {
   return true;
 }
 function updateNextBtn() {
+  const screens = buildScreens();
   document.getElementById('btnNext').disabled = !isAnswered(screens[current]);
 }
 
 function goNext() {
+  const screens = buildScreens();
   const s = screens[current];
   if (!isAnswered(s)) return;
   if (current === screens.length - 2) { submitAnswers(); return; }
@@ -513,6 +575,7 @@ function goBack() {
 // ══════════════════════════════════════
 async function submitAnswers() {
   const ov = document.getElementById('sendingOverlay'); ov.classList.add('visible');
+  const screens = buildScreens();
   const data = { timestamp: new Date().toISOString() };
   screens.forEach(s => {
     if (['welcome','finish','round_intro','mockup'].includes(s.type)) return;
@@ -553,7 +616,6 @@ function animC(){
   requestAnimationFrame(animC);
 }
 
-// iOS keyboard
 if (window.visualViewport) {
   const nav = document.getElementById('nav');
   function adjustNav() {

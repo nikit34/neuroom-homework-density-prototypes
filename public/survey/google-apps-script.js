@@ -17,9 +17,8 @@
 //
 
 // Столбцы:
-// Время | Р1: Какой список | Р1: Почему | Р2: Где проще | Р2: Что удобнее |
-// Р3: Что помогает | Р3: Почему | Quick Wins | Важность |
-// ТОП варианты | Чего не хватает
+// Время | ЧФ1: Списки | ЧФ2: Время | ЧФ3: Доски | ЧФ4: Quick Wins |
+// ПФ1 | ПФ2 | Финал | Финал: почему | Важность | Чего не хватает
 
 function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('HwDensity');
@@ -36,14 +35,14 @@ function doPost(e) {
   sheet.appendRow([
     data.timestamp || new Date().toISOString(),
     data.r1_q1 || '',
-    data.r1_q2 || '',
     data.r2_q1 || '',
-    data.r2_q2 || '',
     data.r3_q1 || '',
-    data.r3_q2 || '',
     data.qw_q1 || '',
+    data.s1_q1 || '',
+    data.s2_q1 || '',
+    data.final_q1 || '',
+    data.final_q2 || '',
     data.imp_q1 || '',
-    data.top_q1 || '',
     data.f_q1 || '',
   ]);
 
