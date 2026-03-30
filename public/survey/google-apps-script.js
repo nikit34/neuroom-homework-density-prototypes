@@ -39,7 +39,7 @@ function doPost(e) {
       'ПФ2 матч1', 'ПФ2 матч2',
       'Финал', 'Финал: почему',
       'Важность', 'Не хватает',
-      'Значение', 'JSON'
+      'Значение'
     ]);
   }
 
@@ -56,7 +56,6 @@ function doPost(e) {
       '', '',
       '', '',
       data.value || '',
-      '',
     ]);
   } else {
     // Full survey submission
@@ -79,7 +78,6 @@ function doPost(e) {
       data.imp_q1 || '',
       data.miss_q1 || '',
       '',
-      JSON.stringify(data),
     ]);
   }
 
