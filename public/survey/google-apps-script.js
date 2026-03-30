@@ -4,7 +4,7 @@
 //
 // ИНСТРУКЦИЯ:
 // 1. Создай новую Google Таблицу (sheets.new)
-// 2. Создай листы: «Answers», «Events»
+// 2. Первый лист переименуй в «Log» (или оставь «Лист1»)
 // 3. Открой Расширения → Apps Script
 // 4. Удали всё содержимое и вставь этот код
 // 5. Нажми «Развернуть» → «Новое развёртывание»
@@ -14,11 +14,13 @@
 // 6. Скопируй URL развёртывания
 // 7. Вставь его в survey/index.html в строку GOOGLE_SCRIPT_URL = '...'
 //
-// Лист «Answers» — ответы на опрос (столбцы создаются динамически)
-// Лист «Events» — события: шаринг (share_tg, share_vk), заявки (tg_signup)
+// Все данные (ответы, шаринг, заявки) пишутся в один лист.
+// Колонка «Тип» отличает строки: survey / answer / share_tg / share_vk / tg_signup / share_landing
 
 function doPost(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheets()[0]; // первый лист
+
   var data;
   try {
     data = JSON.parse(e.postData.contents);
@@ -28,56 +30,58 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Events (share clicks, telegram signups)
+  // Create header if sheet is empty
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'Время', 'Тип', 'ID', 'Реферер',
+      'ЧФ1', 'ЧФ2', 'ЧФ3', 'QW',
+      'ПФ1 матч1', 'ПФ1 матч2', 'ПФ1 матч3',
+      'ПФ2 матч1', 'ПФ2 матч2',
+      'Финал', 'Финал: почему',
+      'Важность', 'Не хватает',
+      'Значение', 'JSON'
+    ]);
+  }
+
   if (data.event) {
-    var evSheet = ss.getSheetByName('Events');
-    if (!evSheet) { evSheet = ss.insertSheet('Events'); evSheet.appendRow(['Время', 'ID', 'Реферер', 'Событие', 'Значение']); }
-    evSheet.appendRow([
+    // Event row (answer, share, signup, landing)
+    sheet.appendRow([
       data.timestamp || new Date().toISOString(),
+      data.event || '',
       data.respondent_id || '',
       data.referred_by || '',
-      data.event || '',
+      '', '', '', '',
+      '', '', '',
+      '', '',
+      '', '',
+      '', '',
       data.value || '',
+      '',
     ]);
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok' }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
-  // Survey answers — fixed columns for all possible matches
-  var sheet = ss.getSheetByName('Answers');
-  if (!sheet) {
-    sheet = ss.insertSheet('Answers');
+  } else {
+    // Full survey submission
     sheet.appendRow([
-      'Время','ID','Реферер',
-      'ЧФ1','ЧФ2','ЧФ3','QW',
-      'ПФ1 матч1','ПФ1 матч2','ПФ1 матч3',
-      'ПФ2 матч1','ПФ2 матч2',
-      'Финал','Финал: почему',
-      'Важность','Не хватает',
-      'JSON'
+      data.timestamp || new Date().toISOString(),
+      'survey',
+      data.respondent_id || '',
+      data.referred_by || '',
+      data.r1_q1 || '',
+      data.r2_q1 || '',
+      data.r3_q1 || '',
+      data.qw_q1 || '',
+      data.s1_m1_q1 || '',
+      data.s1_m2_q1 || '',
+      data.s1_m3_q1 || '',
+      data.s2_m1_q1 || '',
+      data.s2_m2_q1 || '',
+      data.final_m1_q1 || '',
+      data.final_q2 || '',
+      data.imp_q1 || '',
+      data.miss_q1 || '',
+      '',
+      JSON.stringify(data),
     ]);
   }
-
-  sheet.appendRow([
-    data.timestamp || new Date().toISOString(),
-    data.respondent_id || '',
-    data.referred_by || '',
-    data.r1_q1 || '',
-    data.r2_q1 || '',
-    data.r3_q1 || '',
-    data.qw_q1 || '',
-    data.s1_m1_q1 || '',
-    data.s1_m2_q1 || '',
-    data.s1_m3_q1 || '',
-    data.s2_m1_q1 || '',
-    data.s2_m2_q1 || '',
-    data.final_m1_q1 || '',
-    data.final_q2 || '',
-    data.imp_q1 || '',
-    data.miss_q1 || '',
-    JSON.stringify(data),
-  ]);
 
   return ContentService
     .createTextOutput(JSON.stringify({ status: 'ok' }))
