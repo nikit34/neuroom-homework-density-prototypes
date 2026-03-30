@@ -157,6 +157,7 @@ textarea::placeholder{color:var(--text-dim)}
 .bracket-slot--win{border-color:var(--accent);background:rgba(124,92,252,.12);color:var(--text)}
 .bracket-slot--lose{opacity:.35;text-decoration:line-through;color:var(--text-dim)}
 .bracket-slot--auto{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.08);color:var(--success)}
+.bracket-slot--ghost{opacity:.15;border-style:dashed}
 .bracket-slot-icon{font-size:13px;flex-shrink:0;width:18px;text-align:center}
 .bracket-slot-name{flex:1;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:break-word}
 .bracket-connector{display:flex;align-items:center;justify-content:center;height:20px;position:relative}
@@ -183,6 +184,25 @@ textarea::placeholder{color:var(--text-dim)}
 .bracket-line-pair::before{content:'';position:absolute;top:25%;bottom:25%;right:0;width:8px;border:1.5px solid var(--border);border-left:none;border-radius:0 6px 6px 0}
 .bracket-line-out{flex:1;display:flex;align-items:center;position:relative}
 .bracket-line-out::after{content:'';position:absolute;left:0;top:50%;width:100%;height:1.5px;background:var(--border)}
+
+/* semi-final bracket */
+.semi-bracket{display:flex;flex-direction:column;gap:12px;width:100%;padding-top:4px}
+.semi-bracket__head{display:grid;grid-template-columns:minmax(0,1.55fr) 20px minmax(0,1fr);gap:8px;align-items:center;padding:0 4px}
+.semi-bracket__head-col{font-size:9px;color:var(--text-dim);font-weight:700;letter-spacing:.5px;text-transform:uppercase;text-align:center}
+.semi-bracket__row{display:grid;grid-template-columns:minmax(0,1.55fr) 20px minmax(0,1fr);gap:8px;align-items:center}
+.semi-bracket__qf{display:flex;flex-direction:column;gap:8px;min-width:0}
+.semi-bracket__pair{display:flex;flex-direction:column;gap:6px;min-width:0}
+.semi-bracket__connector{position:relative;align-self:stretch;min-height:100%;min-width:20px}
+.semi-bracket__connector::before{content:'';position:absolute;top:18%;bottom:18%;right:4px;width:10px;border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0}
+.semi-bracket__connector::after{content:'';position:absolute;left:0;top:50%;width:10px;height:1.5px;background:var(--border);transform:translateY(-50%)}
+.semi-bracket__match{display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:72px;padding:10px 12px;border:1.5px solid rgba(124,92,252,.42);border-radius:12px;background:rgba(124,92,252,.08)}
+.semi-bracket__match--auto{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.08)}
+.semi-bracket__match--empty{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08)}
+.semi-bracket__match-label{font-size:9px;color:var(--accent-light);font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.semi-bracket__match--auto .semi-bracket__match-label{color:var(--success)}
+.semi-bracket__match--empty .semi-bracket__match-label{color:#fca5a5}
+.semi-bracket__match-text{font-size:12px;line-height:1.3;font-weight:700;color:var(--text);overflow-wrap:anywhere;word-break:break-word}
+.semi-bracket__match--empty .semi-bracket__match-text{color:#fecaca}
 
 /* ── Sending overlay ── */
 .sending-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,26,.85);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px}
@@ -223,6 +243,12 @@ textarea::placeholder{color:var(--text-dim)}
   textarea{min-height:80px;font-size:16px;padding:12px}
   .choice-btn{padding:12px 14px;font-size:14px}
   .chip{padding:10px 12px;font-size:13px}
+  .semi-bracket{gap:10px}
+  .semi-bracket__head,.semi-bracket__row{grid-template-columns:minmax(0,1.45fr) 16px minmax(0,1fr);gap:6px}
+  .semi-bracket__connector{min-width:16px}
+  .semi-bracket__connector::before{right:2px;width:10px}
+  .semi-bracket__match{min-height:64px;padding:9px 10px}
+  .semi-bracket__match-text{font-size:11px}
 }
 @media (max-width:380px) {
   .iframe-wrap{height:min(calc(100dvh - 200px),600px);border-radius:14px}
@@ -322,6 +348,37 @@ function qfPairHtml(qId, varA, varB) {
   return `<div class="bracket-pair">${slot(w,'win')}${slot(l,'lose')}</div>`;
 }
 
+function qfPairColumnHtml(qId, varA, varB) {
+  const a = answers[qId];
+  const ci = a ? a.choiceIndex : undefined;
+  if (ci === 2) return `<div class="semi-bracket__pair">${slot(varA,'win')}${slot(varB,'win')}</div>`;
+  if (ci === 3) return `<div class="semi-bracket__pair">${slot(varA,'lose')}${slot(varB,'lose')}</div>`;
+  const w = ci === 1 ? varB : varA, l = ci === 1 ? varA : varB;
+  return `<div class="semi-bracket__pair">${slot(w,'win')}${slot(l,'lose')}</div>`;
+}
+
+function autoPairColumnHtml(v) {
+  return `<div class="semi-bracket__pair">${slot(v,'auto')}<div class="bracket-slot bracket-slot--ghost"><span class="bracket-slot-icon"></span><span class="bracket-slot-name" style="text-align:center;color:var(--text-dim)">авто</span></div></div>`;
+}
+
+function semiMatchCardHtml(pool, label) {
+  let cls = '';
+  let text = '';
+  if (pool.length === 0) {
+    cls = ' semi-bracket__match--empty';
+    text = 'Нет участников';
+  } else if (pool.length === 1) {
+    cls = ' semi-bracket__match--auto';
+    text = `${pool[0].label} — без боя`;
+  } else if (pool.length === 2) {
+    text = `${pool[0].label} vs ${pool[1].label}`;
+  } else {
+    text = `${pool.map((v) => v.label).join(' • ')}`;
+  }
+
+  return `<div class="semi-bracket__match${cls}"><div class="semi-bracket__match-label">${label}</div><div class="semi-bracket__match-text">${text}</div></div>`;
+}
+
 function poolLabel(pool) {
   if (pool.length === 0) return '<div style="text-align:center;font-size:11px;color:#ef4444;font-weight:600">&#128128; Нет участников — соперник без боя</div>';
   if (pool.length === 1) return `<div class="bracket-next">&#9889; ${pool[0].label} проходит без боя</div>`;
@@ -334,21 +391,33 @@ function buildSemiBracketHtml() {
   const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix), V.quickwins];
   return `
   <div class="bracket-tree">
-    <div class="bracket-stage-label">&#127942; Результаты четвертьфиналов</div>
-    <div class="bracket-half">
-      ${qfPairHtml('r1_q1',V.filter,V.kanban)}
-      <div class="bracket-connector"></div>
-      ${qfPairHtml('r2_q1',V.priority,V.calendar)}
-      <div class="bracket-connector-single"></div>
-      ${poolLabel(pool1)}
-    </div>
-    <div class="bracket-divider"></div>
-    <div class="bracket-half">
-      ${qfPairHtml('r3_q1',V.timeline,V.matrix)}
-      <div class="bracket-connector"></div>
-      <div class="bracket-pair">${slot(V.quickwins,'auto')}<div class="bracket-slot" style="opacity:.15;border-style:dashed"><span class="bracket-slot-name" style="text-align:center;color:var(--text-dim)">авто</span></div></div>
-      <div class="bracket-connector-single"></div>
-      ${poolLabel(pool2)}
+    <div class="bracket-stage-label">&#127942; Турнирная сетка</div>
+    <div class="semi-bracket">
+      <div class="semi-bracket__head">
+        <div class="semi-bracket__head-col">ЧФ</div>
+        <div></div>
+        <div class="semi-bracket__head-col">ПФ</div>
+      </div>
+      <div class="semi-bracket__row">
+        <div class="semi-bracket__qf">
+          ${qfPairColumnHtml('r1_q1',V.filter,V.kanban)}
+          ${qfPairColumnHtml('r2_q1',V.priority,V.calendar)}
+        </div>
+        <div class="semi-bracket__connector"></div>
+        <div class="semi-bracket__next">
+          ${semiMatchCardHtml(pool1, 'ПФ1')}
+        </div>
+      </div>
+      <div class="semi-bracket__row">
+        <div class="semi-bracket__qf">
+          ${qfPairColumnHtml('r3_q1',V.timeline,V.matrix)}
+          ${autoPairColumnHtml(V.quickwins)}
+        </div>
+        <div class="semi-bracket__connector"></div>
+        <div class="semi-bracket__next">
+          ${semiMatchCardHtml(pool2, 'ПФ2')}
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -550,6 +619,9 @@ let current = 0;
 const answers = {};
 let shouldAnimate = true;
 let halfwayShown = false;
+// Unique respondent ID (persisted in sessionStorage for this session)
+const respondentId = sessionStorage.getItem('neuroom_rid') || (Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+sessionStorage.setItem('neuroom_rid', respondentId);
 
 // ══════════════════════════════════════
 // RENDER
@@ -806,7 +878,8 @@ function goBack() {
 async function submitAnswers() {
   const ov = document.getElementById('sendingOverlay'); ov.classList.add('visible');
   const screens = buildScreens();
-  const data = { timestamp: new Date().toISOString() };
+  const ref = sessionStorage.getItem('neuroom_ref') || '';
+  const data = { timestamp: new Date().toISOString(), respondent_id: respondentId, referred_by: ref };
   screens.forEach(s => {
     if (['welcome','finish','round_intro','mockup'].includes(s.type)) return;
     const a = answers[s.id] || {};
@@ -837,7 +910,7 @@ function shareResult(platform) {
   const fin = buildPoolElim([sf1.winner,sf2.winner].filter(Boolean),'final');
   const champName = fin.winner ? fin.winner.label : '???';
   const text = 'Я прошёл чемпионат экранов Neuroom! Мой чемпион: ' + champName + ' \uD83C\uDFC6';
-  const url = location.href.split('?')[0];
+  const url = location.href.split('?')[0] + '?ref=share&from=' + respondentId;
   let shareUrl = '';
   if (platform === 'tg') shareUrl = 'https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(text);
   else if (platform === 'vk') shareUrl = 'https://vk.com/share.php?url='+encodeURIComponent(url)+'&title='+encodeURIComponent(text);
@@ -857,7 +930,8 @@ function submitTgHandle() {
 }
 
 function logEvent(eventType, value) {
-  const data = { timestamp: new Date().toISOString(), event: eventType, value: value };
+  const ref = sessionStorage.getItem('neuroom_ref') || '';
+  const data = { timestamp: new Date().toISOString(), event: eventType, value: value, respondent_id: respondentId, referred_by: ref };
   if (GOOGLE_SCRIPT_URL) {
     try { fetch(GOOGLE_SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); } catch(e) {}
   }
@@ -904,7 +978,49 @@ document.addEventListener('focusin', e => {
   }
 });
 
-render();
+// ══════════════════════════════════════
+// SHARE LANDING (для перехода по ссылке)
+// ══════════════════════════════════════
+function renderShareLanding() {
+  const app = document.getElementById('app');
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('nav').style.display = 'none';
+  logEvent('share_landing', '');
+
+  app.innerHTML = `
+  <div class="screen active anim" style="align-items:center">
+    <div class="welcome-icon">&#127942;</div>
+    <div class="welcome-title">Чемпионат экранов Neuroom</div>
+    <div class="finish-sub">Твой друг прошёл чемпионат и выбрал лучший экран для домашних заданий. Попробуй и ты!</div>
+
+    <div style="margin-top:12px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px;text-align:center">Хочешь участвовать в продуктовых исследованиях Neuroom?</div>
+      <div style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:10px">Оставь свой Telegram — мы напишем, когда понадобится твоё мнение</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="tgHandle" placeholder="@username" style="flex:1;background:var(--input-bg);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:16px;font-family:inherit;padding:12px;outline:none;text-align:center;letter-spacing:0">
+        <button onclick="submitTgHandle()" id="tgSubmitBtn" style="padding:12px 16px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">Отправить</button>
+      </div>
+      <div id="tgSuccess" style="display:none;text-align:center;color:var(--success);font-size:13px;font-weight:600;margin-top:8px">&#10004; Записали! Напишем.</div>
+    </div>
+
+    <div style="width:100%;margin-top:12px">
+      <a href="${location.pathname}" style="display:block;text-align:center;padding:16px 20px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#9333ea);color:#fff;font-size:16px;font-weight:700;text-decoration:none;font-family:inherit;box-shadow:0 4px 15px var(--accent-glow)">Пройти чемпионат самому</a>
+    </div>
+  </div>`;
+}
+
+// ── Init ──
+const _params = new URLSearchParams(location.search);
+const _ref = _params.get('ref');
+const _refId = _params.get('from') || '';
+// Store referrer for this session
+if (_refId) sessionStorage.setItem('neuroom_ref', _refId);
+
+if (_ref === 'share') {
+  renderShareLanding();
+} else {
+  render();
+}
 </script>
 </body>
 </html>

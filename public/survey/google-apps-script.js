@@ -31,9 +31,11 @@ function doPost(e) {
   // Events (share clicks, telegram signups)
   if (data.event) {
     var evSheet = ss.getSheetByName('Events');
-    if (!evSheet) { evSheet = ss.insertSheet('Events'); evSheet.appendRow(['Время', 'Событие', 'Значение']); }
+    if (!evSheet) { evSheet = ss.insertSheet('Events'); evSheet.appendRow(['Время', 'ID', 'Реферер', 'Событие', 'Значение']); }
     evSheet.appendRow([
       data.timestamp || new Date().toISOString(),
+      data.respondent_id || '',
+      data.referred_by || '',
       data.event || '',
       data.value || '',
     ]);
@@ -44,7 +46,7 @@ function doPost(e) {
 
   // Survey answers — store as JSON blob + key columns
   var sheet = ss.getSheetByName('Answers');
-  if (!sheet) { sheet = ss.insertSheet('Answers'); sheet.appendRow(['Время','ЧФ1','ЧФ2','ЧФ3','QW','ПФ матчи','Финал','Финал: почему','Важность','Не хватает','Все данные (JSON)']); }
+  if (!sheet) { sheet = ss.insertSheet('Answers'); sheet.appendRow(['Время','ID','Реферер','ЧФ1','ЧФ2','ЧФ3','QW','ПФ матчи','Финал: почему','Важность','Не хватает','Все данные (JSON)']); }
 
   // Collect all semi/final match answers into one string
   var sfMatches = [];
@@ -54,6 +56,8 @@ function doPost(e) {
 
   sheet.appendRow([
     data.timestamp || new Date().toISOString(),
+    data.respondent_id || '',
+    data.referred_by || '',
     data.r1_q1 || '',
     data.r2_q1 || '',
     data.r3_q1 || '',
