@@ -4,6 +4,7 @@ import HwCard from "./HwCard";
 
 interface VariantFigmaMobileProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 function byDeadlineAscending(a: HomeworkItem, b: HomeworkItem): number {
@@ -16,6 +17,7 @@ function isActiveHomework(hw: HomeworkItem): boolean {
 
 export default function VariantFigmaMobile({
   selectedSubjectId = null,
+  onSelect,
 }: VariantFigmaMobileProps) {
   const filteredHomework = useMemo(() => {
     const visibleHomework =
@@ -44,7 +46,7 @@ export default function VariantFigmaMobile({
         </div>
         <div className="figma-section__list">
           {activeHomework.length > 0 ? (
-            activeHomework.map((hw) => <HwCard key={hw.id} hw={hw} />)
+            activeHomework.map((hw) => <HwCard key={hw.id} hw={hw} onSelect={onSelect} />)
           ) : (
             <div className="empty-state">Нет активных заданий по выбранному предмету</div>
           )}
@@ -57,7 +59,7 @@ export default function VariantFigmaMobile({
         </div>
         <div className="figma-section__list">
           {completedHomework.length > 0 ? (
-            completedHomework.map((hw) => <HwCard key={hw.id} hw={hw} />)
+            completedHomework.map((hw) => <HwCard key={hw.id} hw={hw} onSelect={onSelect} />)
           ) : (
             <div className="empty-state">Пока нет выполненных заданий</div>
           )}

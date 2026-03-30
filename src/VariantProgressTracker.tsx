@@ -10,6 +10,7 @@ import HwCard from "./HwCard";
 
 interface VariantProgressTrackerProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 interface SubjectProgress {
@@ -21,7 +22,7 @@ interface SubjectProgress {
   overdue: number;
 }
 
-export default function VariantProgressTracker({ selectedSubjectId = null }: VariantProgressTrackerProps) {
+export default function VariantProgressTracker({ selectedSubjectId = null, onSelect }: VariantProgressTrackerProps) {
   const homework = useMemo(() => {
     if (selectedSubjectId === null) return HOMEWORK_LIST;
     return HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId);
@@ -122,7 +123,7 @@ export default function VariantProgressTracker({ selectedSubjectId = null }: Var
           <div className="prog-action__title">Требуют внимания ({actionItems.length})</div>
           <div className="prog-action__list">
             {actionItems.map((hw) => (
-              <HwCard key={hw.id} hw={hw} />
+              <HwCard key={hw.id} hw={hw} onSelect={onSelect} />
             ))}
           </div>
         </div>

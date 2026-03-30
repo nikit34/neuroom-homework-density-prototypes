@@ -1623,6 +1623,212 @@ button {
 }
 
 /* ═══════════════════════════════════════════════════
+   HW Detail Modal
+   ═══════════════════════════════════════════════════ */
+
+.detail-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(35, 35, 35, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.detail-modal {
+  width: 100%;
+  max-height: 92%;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  animation: detail-slide-up 0.25s ease-out;
+}
+
+@keyframes detail-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-back {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text);
+}
+
+.detail-header__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.detail-status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.detail-status--missed { background: rgba(212, 87, 87, 0.12); color: #d45757; }
+.detail-status--resend { background: rgba(212, 87, 87, 0.12); color: #c03b3b; }
+.detail-status--checked { background: #eefcf4; color: var(--green); }
+.detail-status--review { background: rgba(116, 85, 255, 0.1); color: var(--purple); }
+.detail-status--done { background: #eefcf4; color: var(--green); }
+.detail-status--new { background: rgba(35, 35, 35, 0.06); color: var(--text-muted); }
+
+.detail-subject {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-subject__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.detail-subject__name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.detail-subject__teacher {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-subtle);
+}
+
+.detail-desc {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-muted);
+  padding: 12px 16px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.detail-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-date-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.detail-date-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.detail-date-label {
+  color: var(--text-subtle);
+  font-weight: 400;
+}
+
+.detail-date-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.detail-grade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--green-border);
+  border-radius: 14px;
+  background: var(--green-soft);
+}
+
+.detail-grade__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.detail-grade__value {
+  margin-left: auto;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.detail-actions__row {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+}
+
+.detail-btn--primary {
+  width: 100%;
+  border: none;
+  background: var(--black-button);
+  color: #ffffff;
+}
+
+.detail-btn--secondary {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.detail-btn__icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ═══════════════════════════════════════════════════
    Mobile — iPhone 11 (414pt) and below
    ═══════════════════════════════════════════════════ */
 

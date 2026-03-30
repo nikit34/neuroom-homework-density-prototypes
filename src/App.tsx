@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { SUBJECTS } from "./mockData";
+import { SUBJECTS, type HomeworkItem } from "./mockData";
 import logoWordmark from "./assets/logo-wordmark.svg";
 import menuIcon from "./assets/icon-menu.svg";
+import HwDetailModal from "./HwDetailModal";
 import VariantFigmaMobile from "./VariantFigmaMobile";
-
 import VariantTimelineDashboard from "./VariantTimelineDashboard";
 import VariantPriorityInbox from "./VariantPriorityInbox";
-
 import VariantCalendarWeek from "./VariantCalendarWeek";
 import VariantKanban from "./VariantKanban";
 import VariantMatrix from "./VariantMatrix";
@@ -17,8 +16,6 @@ import VariantQuickWins from "./VariantQuickWins";
 const tabs = [
   { key: "figma", label: "Простой список", path: "/" },
   { key: "priority", label: "Priority Inbox", path: "/priority" },
-
-
   { key: "timeline-dashboard", label: "Timeline+Dash", path: "/timeline" },
   { key: "calendar", label: "Calendar Week", path: "/calendar" },
   { key: "kanban", label: "Kanban", path: "/kanban" },
@@ -29,8 +26,6 @@ const tabs = [
 
 function getActiveTab(pathname: string): string {
   if (pathname === "/priority") return "priority";
-
-
   if (pathname === "/timeline") return "timeline-dashboard";
   if (pathname === "/calendar") return "calendar";
   if (pathname === "/kanban") return "kanban";
@@ -45,6 +40,9 @@ function App() {
   const location = useLocation();
   const activeTab = getActiveTab(location.pathname);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
+  const [selectedHw, setSelectedHw] = useState<HomeworkItem | null>(null);
+
+  const isPriority = activeTab === "priority";
 
   return (
     <div className="proto-shell">
@@ -71,42 +69,46 @@ function App() {
 
         <div className="app-header">
           <h1 className="app-title">Задания</h1>
-          <label className="app-subject-filter">
-            <select
-              className="app-select"
-              value={selectedSubjectId === null ? "all" : String(selectedSubjectId)}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setSelectedSubjectId(nextValue === "all" ? null : Number(nextValue));
-              }}
-            >
-              <option value="all">Все предметы</option>
-              {SUBJECTS.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-            <span className="app-select-chevron" aria-hidden="true">
-              &#8964;
-            </span>
-          </label>
+          {!isPriority && (
+            <label className="app-subject-filter">
+              <select
+                className="app-select"
+                value={selectedSubjectId === null ? "all" : String(selectedSubjectId)}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setSelectedSubjectId(nextValue === "all" ? null : Number(nextValue));
+                }}
+              >
+                <option value="all">Все предметы</option>
+                {SUBJECTS.map((subject) => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
+              <span className="app-select-chevron" aria-hidden="true">
+                &#8964;
+              </span>
+            </label>
+          )}
         </div>
 
         <div className="proto-screen">
           <Routes>
-            <Route path="/" element={<VariantFigmaMobile selectedSubjectId={selectedSubjectId} />} />
-            <Route path="/priority" element={<VariantPriorityInbox selectedSubjectId={selectedSubjectId} />} />
-
-
-            <Route path="/timeline" element={<VariantTimelineDashboard selectedSubjectId={selectedSubjectId} />} />
-            <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} />} />
-            <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} />} />
-            <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} />} />
-            <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} />} />
-            <Route path="/quick-wins" element={<VariantQuickWins selectedSubjectId={selectedSubjectId} />} />
+            <Route path="/" element={<VariantFigmaMobile selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/priority" element={<VariantPriorityInbox onSelect={setSelectedHw} />} />
+            <Route path="/timeline" element={<VariantTimelineDashboard selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/quick-wins" element={<VariantQuickWins selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
           </Routes>
         </div>
+
+        {selectedHw && (
+          <HwDetailModal hw={selectedHw} onClose={() => setSelectedHw(null)} />
+        )}
       </div>
     </div>
   );

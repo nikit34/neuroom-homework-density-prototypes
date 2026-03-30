@@ -8,6 +8,7 @@ import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
 
 interface VariantMatrixProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 function getNext10Days(): Date[] {
@@ -42,7 +43,7 @@ function statusIndicator(hw: HomeworkItem): string {
   }
 }
 
-export default function VariantMatrix({ selectedSubjectId = null }: VariantMatrixProps) {
+export default function VariantMatrix({ selectedSubjectId = null, onSelect }: VariantMatrixProps) {
   const days = useMemo(getNext10Days, []);
 
   const homework = useMemo(() => {
@@ -106,6 +107,8 @@ export default function VariantMatrix({ selectedSubjectId = null }: VariantMatri
                           key={hw.id}
                           className={`mtx-pip ${statusIndicator(hw)}`}
                           title={hw.description}
+                          onClick={() => onSelect?.(hw)}
+                          style={{ cursor: "pointer" }}
                         />
                       ))}
                     </td>

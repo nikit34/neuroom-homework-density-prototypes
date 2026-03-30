@@ -8,6 +8,7 @@ import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
 
 interface VariantCalendarWeekProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 function subjectColor(subjectId: number): string {
@@ -53,7 +54,7 @@ function statusDot(status: HomeworkItem["status"]): string {
   }
 }
 
-export default function VariantCalendarWeek({ selectedSubjectId = null }: VariantCalendarWeekProps) {
+export default function VariantCalendarWeek({ selectedSubjectId = null, onSelect }: VariantCalendarWeekProps) {
   const days = useMemo(getWeekDays, []);
 
   const homework = useMemo(() => {
@@ -96,7 +97,7 @@ export default function VariantCalendarWeek({ selectedSubjectId = null }: Varian
           <span className="cal-overdue-banner__count">{overdue.length}</span>
           <div className="cal-overdue-banner__items">
             {overdue.map((hw) => (
-              <div key={hw.id} className="cal-overdue-item" style={{ borderLeftColor: subjectColor(hw.subjectId) }}>
+              <div key={hw.id} className="cal-overdue-item" style={{ borderLeftColor: subjectColor(hw.subjectId), cursor: "pointer" }} onClick={() => onSelect?.(hw)}>
                 <span className="cal-overdue-item__subject">{hw.subject}</span>
                 <span className="cal-overdue-item__desc">{hw.description}</span>
               </div>
@@ -128,15 +129,16 @@ export default function VariantCalendarWeek({ selectedSubjectId = null }: Varian
                       <div
                         key={hw.id}
                         className={`cal-dot ${statusDot(hw.status)}`}
-                        style={{ background: subjectColor(hw.subjectId) }}
+                        style={{ background: subjectColor(hw.subjectId), cursor: "pointer" }}
                         title={`${hw.subject}: ${hw.description}`}
+                        onClick={() => onSelect?.(hw)}
                       />
                     ))}
                   </div>
                   {items.length > 0 && (
                     <div className="cal-cell__mini-list">
                       {items.slice(0, 2).map((hw) => (
-                        <div key={hw.id} className="cal-mini" style={{ borderLeftColor: subjectColor(hw.subjectId) }}>
+                        <div key={hw.id} className="cal-mini" style={{ borderLeftColor: subjectColor(hw.subjectId), cursor: "pointer" }} onClick={() => onSelect?.(hw)}>
                           <span className="cal-mini__text">{hw.subject}</span>
                         </div>
                       ))}

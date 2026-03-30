@@ -15,7 +15,7 @@ interface PriorityGroup {
 }
 
 interface VariantPriorityInboxProps {
-  selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
@@ -62,17 +62,11 @@ function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
 const DEFAULT_COLLAPSED: Record<string, boolean> = { later: true, done: true };
 
 export default function VariantPriorityInbox({
-  selectedSubjectId = null,
+  onSelect,
 }: VariantPriorityInboxProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(DEFAULT_COLLAPSED);
 
-  const groups = useMemo(() => {
-    const filteredHomework =
-      selectedSubjectId === null
-        ? HOMEWORK_LIST
-        : HOMEWORK_LIST.filter((hw) => hw.subjectId === selectedSubjectId);
-    return classifyIntoGroups(filteredHomework);
-  }, [selectedSubjectId]);
+  const groups = useMemo(() => classifyIntoGroups(HOMEWORK_LIST), []);
 
   const toggleCollapse = (key: string) =>
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -116,7 +110,7 @@ export default function VariantPriorityInbox({
             {!isCollapsed && (
               <div className="collapse-body">
                 {group.items.map((hw) => (
-                  <HwCard key={hw.id} hw={hw} />
+                  <HwCard key={hw.id} hw={hw} onSelect={onSelect} />
                 ))}
               </div>
             )}

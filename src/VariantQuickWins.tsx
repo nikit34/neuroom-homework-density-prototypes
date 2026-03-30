@@ -4,6 +4,7 @@ import HwCard from "./HwCard";
 
 interface VariantQuickWinsProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 interface QuickTask extends HomeworkItem {
@@ -79,12 +80,14 @@ function compareQuickTasks(a: QuickTask, b: QuickTask): number {
   );
 }
 
-function QuickTaskCard({ task }: { task: QuickTask }) {
+function QuickTaskCard({ task, onSelect }: { task: QuickTask; onSelect?: (hw: HomeworkItem) => void }) {
   return (
     <article
       className={`qw-card ${
         task.dayDiff < 0 ? "qw-card--overdue" : task.dayDiff === 0 ? "qw-card--today" : ""
       }`}
+      onClick={() => onSelect?.(task)}
+      style={{ cursor: onSelect ? "pointer" : undefined }}
     >
       <div className="qw-card__top">
         <div className="qw-card__subject-wrap">
@@ -118,6 +121,7 @@ function QuickTaskCard({ task }: { task: QuickTask }) {
 
 export default function VariantQuickWins({
   selectedSubjectId = null,
+  onSelect,
 }: VariantQuickWinsProps) {
   const visibleHomework = useMemo(
     () =>
@@ -179,7 +183,7 @@ export default function VariantQuickWins({
           </div>
           <div className="qw-section__list">
             {focusTasks.map((task) => (
-              <QuickTaskCard key={task.id} task={task} />
+              <QuickTaskCard key={task.id} task={task} onSelect={onSelect} />
             ))}
           </div>
         </section>
@@ -195,7 +199,7 @@ export default function VariantQuickWins({
           </div>
           <div className="qw-section__list">
             {laterTasks.map((task) => (
-              <QuickTaskCard key={task.id} task={task} />
+              <QuickTaskCard key={task.id} task={task} onSelect={onSelect} />
             ))}
           </div>
         </section>
@@ -209,7 +213,7 @@ export default function VariantQuickWins({
           </div>
           <div className="hwc-list">
             {heavyTasks.map((task) => (
-              <HwCard key={task.id} hw={task} />
+              <HwCard key={task.id} hw={task} onSelect={onSelect} />
             ))}
           </div>
         </section>

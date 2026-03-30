@@ -8,6 +8,7 @@ import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
 
 interface VariantKanbanProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 function subjectColor(subjectId: number): string {
@@ -58,7 +59,7 @@ function buildColumns(list: HomeworkItem[]): KanbanColumn[] {
   ].filter((col) => col.items.length > 0);
 }
 
-export default function VariantKanban({ selectedSubjectId = null }: VariantKanbanProps) {
+export default function VariantKanban({ selectedSubjectId = null, onSelect }: VariantKanbanProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const homework = useMemo(() => {
@@ -80,7 +81,7 @@ export default function VariantKanban({ selectedSubjectId = null }: VariantKanba
             </div>
             <div className="kanban-col__list">
               {col.items.map((hw) => (
-                <div key={hw.id} className="kanban-card">
+                <div key={hw.id} className="kanban-card" onClick={() => onSelect?.(hw)} style={{ cursor: "pointer" }}>
                   <div className="kanban-card__bar" style={{ background: subjectColor(hw.subjectId) }} />
                   <div className="kanban-card__body">
                     <span className="kanban-card__subject">{hw.subject}</span>

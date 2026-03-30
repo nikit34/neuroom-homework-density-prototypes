@@ -8,6 +8,7 @@ import iconWaiting from "./assets/icon-waiting.svg";
 interface HwCardProps {
   hw: HomeworkItem;
   hideSubject?: boolean;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 type CardTone = "active" | "waiting" | "score" | "checked";
@@ -106,11 +107,11 @@ function getCardViewModel(hw: HomeworkItem): CardViewModel {
   }
 }
 
-export default function HwCard({ hw, hideSubject = false }: HwCardProps) {
+export default function HwCard({ hw, hideSubject = false, onSelect }: HwCardProps) {
   const cardView = getCardViewModel(hw);
 
   return (
-    <article className={`hwc hwc--tone-${cardView.tone}`}>
+    <article className={`hwc hwc--tone-${cardView.tone}`} onClick={() => onSelect?.(hw)} style={{ cursor: onSelect ? "pointer" : undefined }}>
       <div className="hwc__body">
         <div className="hwc__top">
           <span className="hwc__checkbox" aria-hidden="true" />

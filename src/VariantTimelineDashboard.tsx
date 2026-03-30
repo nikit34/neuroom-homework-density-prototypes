@@ -2,10 +2,11 @@ import { useState, useMemo } from "react";
 import { HOMEWORK_LIST, type HomeworkItem } from "./mockData";
 import HwCard from "./HwCard";
 
-/* ── Variant 2+4: Timeline by Date + Compact Dashboard Summary ── */
+/* ── Variant: Timeline ── */
 
 interface VariantTimelineDashboardProps {
   selectedSubjectId?: number | null;
+  onSelect?: (hw: HomeworkItem) => void;
 }
 
 function formatDateKey(dateStr: string): string {
@@ -31,6 +32,7 @@ function formatDateLabel(dateStr: string): string {
 
 export default function VariantTimelineDashboard({
   selectedSubjectId = null,
+  onSelect,
 }: VariantTimelineDashboardProps) {
   const [showDone, setShowDone] = useState(false);
   const visibleHomework = useMemo(
@@ -41,16 +43,10 @@ export default function VariantTimelineDashboard({
     [selectedSubjectId],
   );
 
-  const stats = useMemo(() => {
-    const active = visibleHomework.filter((h) => h.status !== "done");
-    return {
-      newCount: active.filter((h) => h.status === "new").length,
-      overdue: active.filter((h) => h.status === "missed").length,
-      resend: active.filter((h) => h.status === "resend").length,
-      inReview: active.filter((h) => h.status === "in_review" || h.status === "checked").length,
-      doneCount: visibleHomework.filter((h) => h.status === "done").length,
-    };
-  }, [visibleHomework]);
+  const doneCount = useMemo(
+    () => visibleHomework.filter((h) => h.status === "done").length,
+    [visibleHomework],
+  );
 
   const dateGroups = useMemo(() => {
     const list = visibleHomework.filter((h) => (showDone ? true : h.status !== "done"));
@@ -67,27 +63,8 @@ export default function VariantTimelineDashboard({
 
   return (
     <div className="variant">
-      <div className="dashboard">
-        <div className="dash-card dash-card--new">
-          <div className="dash-card__num">{stats.newCount}</div>
-          <div className="dash-card__label">Новых</div>
-        </div>
-        <div className="dash-card dash-card--overdue">
-          <div className="dash-card__num">{stats.overdue}</div>
-          <div className="dash-card__label">Долги</div>
-        </div>
-        <div className="dash-card dash-card--resend">
-          <div className="dash-card__num">{stats.resend}</div>
-          <div className="dash-card__label">Пересдача</div>
-        </div>
-        <div className="dash-card dash-card--review">
-          <div className="dash-card__num">{stats.inReview}</div>
-          <div className="dash-card__label">Проверка</div>
-        </div>
-      </div>
-
-      <button className="toggle-done" onClick={() => setShowDone(!showDone)}>
-        {showDone ? "Скрыть сданные" : `Показать сданные (${stats.doneCount})`}
+      <button className="toggle-done" onClick={() => setShowDone(!showDone)} type="button">
+        {showDone ? "Скрыть сданные" : `Показать сданные (${doneCount})`}
       </button>
 
       <div className="timeline">
@@ -104,7 +81,7 @@ export default function VariantTimelineDashboard({
               </div>
               <div className="timeline-items">
                 {group.items.map((hw) => (
-                  <HwCard key={hw.id} hw={hw} />
+                  <HwCard key={hw.id} hw={hw} onSelect={onSelect} />
                 ))}
               </div>
             </div>
