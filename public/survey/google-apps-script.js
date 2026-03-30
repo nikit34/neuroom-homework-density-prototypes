@@ -44,14 +44,19 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Survey answers — store as JSON blob + key columns
+  // Survey answers — fixed columns for all possible matches
   var sheet = ss.getSheetByName('Answers');
-  if (!sheet) { sheet = ss.insertSheet('Answers'); sheet.appendRow(['Время','ID','Реферер','ЧФ1','ЧФ2','ЧФ3','QW','ПФ матчи','Финал: почему','Важность','Не хватает','Все данные (JSON)']); }
-
-  // Collect all semi/final match answers into one string
-  var sfMatches = [];
-  for (var key in data) {
-    if (key.match(/^(s1|s2|final)_m\d+_q1$/)) sfMatches.push(key + ': ' + data[key]);
+  if (!sheet) {
+    sheet = ss.insertSheet('Answers');
+    sheet.appendRow([
+      'Время','ID','Реферер',
+      'ЧФ1','ЧФ2','ЧФ3','QW',
+      'ПФ1 матч1','ПФ1 матч2','ПФ1 матч3',
+      'ПФ2 матч1','ПФ2 матч2',
+      'Финал','Финал: почему',
+      'Важность','Не хватает',
+      'JSON'
+    ]);
   }
 
   sheet.appendRow([
@@ -62,7 +67,12 @@ function doPost(e) {
     data.r2_q1 || '',
     data.r3_q1 || '',
     data.qw_q1 || '',
-    sfMatches.join('; ') || '',
+    data.s1_m1_q1 || '',
+    data.s1_m2_q1 || '',
+    data.s1_m3_q1 || '',
+    data.s2_m1_q1 || '',
+    data.s2_m2_q1 || '',
+    data.final_m1_q1 || '',
     data.final_q2 || '',
     data.imp_q1 || '',
     data.miss_q1 || '',
