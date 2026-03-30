@@ -8,6 +8,7 @@ import VariantFigmaMobile from "./VariantFigmaMobile";
 import VariantTimelineDashboard from "./VariantTimelineDashboard";
 import VariantPriorityInbox from "./VariantPriorityInbox";
 
+import VariantCalendarWeek from "./VariantCalendarWeek";
 import VariantKanban from "./VariantKanban";
 import VariantMatrix from "./VariantMatrix";
 
@@ -18,6 +19,7 @@ const tabs = [
   { key: "priority", label: "Priority Inbox", path: "/priority" },
   { key: "timeline-dashboard", label: "Timeline", path: "/timeline" },
 
+  { key: "calendar", label: "Calendar Week", path: "/calendar" },
   { key: "kanban", label: "Kanban", path: "/kanban" },
   { key: "matrix", label: "Matrix", path: "/matrix" },
 
@@ -28,6 +30,7 @@ function getActiveTab(pathname: string): string {
   if (pathname === "/priority") return "priority";
   if (pathname === "/timeline") return "timeline-dashboard";
 
+  if (pathname === "/calendar") return "calendar";
   if (pathname === "/kanban") return "kanban";
   if (pathname === "/matrix") return "matrix";
 
@@ -99,6 +102,7 @@ function App() {
             <Route path="/priority" element={<VariantPriorityInbox onSelect={setSelectedHw} />} />
             <Route path="/timeline" element={<VariantTimelineDashboard onSelect={setSelectedHw} />} />
 
+            <Route path="/calendar" element={<VariantCalendarWeek selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/kanban" element={<VariantKanban onSelect={setSelectedHw} />} />
             <Route path="/matrix" element={<VariantMatrix onSelect={setSelectedHw} />} />
 

@@ -1015,9 +1015,14 @@ button {
   color: var(--green);
 }
 
-.cal2-cell--review {
+.cal2-cell--neuroom {
   background: var(--orange);
   color: var(--text);
+}
+
+.cal2-cell--review {
+  background: rgba(116, 85, 255, 0.1);
+  color: var(--purple);
 }
 
 /* ═══════════════════════════════════════════════════
