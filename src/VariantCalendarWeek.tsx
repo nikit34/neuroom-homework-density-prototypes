@@ -102,6 +102,11 @@ export default function VariantCalendarWeek({ selectedSubjectId = null, onSelect
           const dk = dateKey(day);
           const items = hwByDate.get(dk) ?? [];
           const today = isToday(day);
+          const isFuture = day > new Date(new Date().setHours(23, 59, 59, 999));
+
+          // Скрываем пустые дни после сегодня
+          if (isFuture && items.length === 0) return null;
+
           const weekday = day.toLocaleDateString("ru-RU", { weekday: "long" });
           const dayNum = day.getDate();
           const month = day.toLocaleDateString("ru-RU", { month: "short" });
