@@ -42,8 +42,7 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [selectedHw, setSelectedHw] = useState<HomeworkItem | null>(null);
 
-  const path = location.pathname;
-  const hideFilter = path === "/priority" || path === "/timeline" || path === "/kanban" || path === "/matrix" || activeTab === "priority" || activeTab === "timeline-dashboard" || activeTab === "kanban" || activeTab === "matrix";
+  const showFilter = activeTab === "figma";
 
   return (
     <div className="proto-shell">
@@ -70,7 +69,7 @@ function App() {
 
         <div className="app-header">
           <h1 className="app-title">Задания</h1>
-          {!hideFilter && (
+          {showFilter && (
             <label className="app-subject-filter">
               <select
                 className="app-select"
