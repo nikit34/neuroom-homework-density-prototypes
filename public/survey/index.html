@@ -260,21 +260,21 @@ const screens = [
   { id:'r1_intro', type:'round_intro', round:'Раунд 1 из 4', title:'Списки заданий', desc:'Сейчас ты увидишь два способа показать задания списком. Прокрути каждый экран и посмотри, как устроено.' },
   { id:'r1_filter', type:'mockup', variant:'a', variantTitle:'Простой список', variantDesc:'Все задания подряд с фильтром по предмету', instruction:'Прокрути экран и посмотри', path:'' },
   { id:'r1_priority', type:'mockup', variant:'b', variantTitle:'Список по приоритету', variantDesc:'Задания разбиты по важности: сначала горящие', instruction:'Прокрути и сравни с предыдущим', path:'priority' },
-  { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:10, text:'Какой список удобнее?', choices:['Простой список с фильтром','Список по приоритету','Оба нормально','Оба не понравились'], required:true },
+  { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:10, text:'Какой список удобнее?', choices:['А — Простой список с фильтром','Б — Список по приоритету','Оба нормально','Оба не понравились'], required:true },
   { id:'r1_q2', type:'textarea', icon:'&#128172;', number:2, total:10, text:'Почему выбрал(а) именно этот?', placeholder:'Мне удобнее, потому что...', required:false },
 
   // ── Round 2: Calendar & Time ──
   { id:'r2_intro', type:'round_intro', round:'Раунд 2 из 4', title:'Время и календарь', desc:'Теперь посмотри, как задания можно показать на временной шкале и в календаре.' },
   { id:'r2_timeline', type:'mockup', variant:'a', variantTitle:'Таймлайн', variantDesc:'Вертикальная линия времени по дням', instruction:'Прокрути экран и посмотри', path:'timeline' },
   { id:'r2_calendar', type:'mockup', variant:'b', variantTitle:'Календарь на неделю', variantDesc:'Дни недели с заданиями в каждом', instruction:'Прокрути и сравни', path:'calendar' },
-  { id:'r2_q1', type:'choice', icon:'&#128197;', number:3, total:10, text:'Где проще найти нужное задание?', choices:['Таймлайн — видно что когда','Календарь — привычнее','Одинаково','Оба неудобные'], required:true },
+  { id:'r2_q1', type:'choice', icon:'&#128197;', number:3, total:10, text:'Где проще найти нужное задание?', choices:['А — Таймлайн','Б — Календарь на неделю','Одинаково','Оба неудобные'], required:true },
   { id:'r2_q2', type:'textarea', icon:'&#128221;', number:4, total:10, text:'Что именно удобнее или понятнее?', placeholder:'Мне понятнее, когда...', required:false },
 
   // ── Round 3: Boards ──
   { id:'r3_intro', type:'round_intro', round:'Раунд 3 из 4', title:'Доски и таблицы', desc:'А здесь задания показаны как доска со столбцами и как таблица «дни × предметы».' },
   { id:'r3_kanban', type:'mockup', variant:'a', variantTitle:'Канбан-доска', variantDesc:'Столбцы по статусу: активные, на проверке, сдано', instruction:'Листай колонки влево-вправо', path:'kanban' },
   { id:'r3_matrix', type:'mockup', variant:'b', variantTitle:'Таблица «Дни × Предметы»', variantDesc:'Строки = дни, столбцы = предметы, ячейки = задания', instruction:'Посмотри на таблицу', path:'matrix' },
-  { id:'r3_q1', type:'choice', icon:'&#128202;', number:5, total:10, text:'Что помогает лучше понять, что делать?', choices:['Канбан-доска — видно статусы','Таблица — видно всё сразу','Одинаково','Оба запутывают'], required:true },
+  { id:'r3_q1', type:'choice', icon:'&#128202;', number:5, total:10, text:'Что помогает лучше понять, что делать?', choices:['А — Канбан-доска','Б — Таблица (дни × предметы)','Одинаково','Оба запутывают'], required:true },
   { id:'r3_q2', type:'textarea', icon:'&#128221;', number:6, total:10, text:'Почему именно этот?', placeholder:'Этот удобнее, потому что...', required:false },
 
   // ── Round 4: Quick Wins ──
