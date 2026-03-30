@@ -10,7 +10,7 @@ import VariantPriorityInbox from "./VariantPriorityInbox";
 
 import VariantKanban from "./VariantKanban";
 import VariantMatrix from "./VariantMatrix";
-import VariantProgressTracker from "./VariantProgressTracker";
+
 import VariantQuickWins from "./VariantQuickWins";
 
 const tabs = [
@@ -20,7 +20,7 @@ const tabs = [
 
   { key: "kanban", label: "Kanban", path: "/kanban" },
   { key: "matrix", label: "Matrix", path: "/matrix" },
-  { key: "progress", label: "Progress", path: "/progress" },
+
   { key: "quick-wins", label: "Quick Wins", path: "/quick-wins" },
 ] as const;
 
@@ -30,7 +30,7 @@ function getActiveTab(pathname: string): string {
 
   if (pathname === "/kanban") return "kanban";
   if (pathname === "/matrix") return "matrix";
-  if (pathname === "/progress") return "progress";
+
   if (pathname === "/quick-wins") return "quick-wins";
   return "figma";
 }
@@ -102,7 +102,7 @@ function App() {
 
             <Route path="/kanban" element={<VariantKanban onSelect={setSelectedHw} />} />
             <Route path="/matrix" element={<VariantMatrix onSelect={setSelectedHw} />} />
-            <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+
             <Route path="/quick-wins" element={<VariantQuickWins selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
           </Routes>
         </div>
