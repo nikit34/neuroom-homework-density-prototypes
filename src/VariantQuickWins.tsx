@@ -136,11 +136,6 @@ export default function VariantQuickWins({
               className={`qw2-card ${isFirst ? "qw2-card--first" : ""}`}
               onClick={() => onSelect?.(task)}
             >
-              {/* Номер */}
-              <div className={`qw2-card__num ${isFirst ? "qw2-card__num--first" : ""}`}>
-                {index + 1}
-              </div>
-
               <div className="qw2-card__body">
                 {/* Строка 1: молнии + предмет */}
                 <div className="qw2-card__top">
