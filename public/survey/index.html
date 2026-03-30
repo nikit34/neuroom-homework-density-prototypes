@@ -177,6 +177,9 @@ textarea::placeholder{color:var(--text-dim)}
 .bracket-cell--win{border-color:var(--accent);background:rgba(124,92,252,.1)}
 .bracket-cell--lose{opacity:.3;text-decoration:line-through}
 .bracket-cell--auto{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.06)}
+.bracket-cell--ghost{opacity:.18;border-style:dashed;color:var(--text-dim)}
+.bracket-cell--stage{border-color:rgba(124,92,252,.42);background:rgba(124,92,252,.08);font-weight:700;justify-content:center;text-align:center}
+.bracket-cell--empty{border-color:rgba(239,68,68,.32);background:rgba(239,68,68,.06);color:#fecaca;font-weight:700;justify-content:center;text-align:center}
 .bracket-cell--next{border-color:#f59e0b;background:rgba(245,158,11,.1);font-weight:700;color:#f59e0b;justify-content:center}
 .bracket-cell--champ{border-color:#f59e0b;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.08));font-weight:700;color:#f59e0b;justify-content:center;font-size:11px}
 .bracket-lines{display:flex;flex-direction:column;justify-content:space-around;width:14px;flex-shrink:0;position:relative}
@@ -203,6 +206,25 @@ textarea::placeholder{color:var(--text-dim)}
 .semi-bracket__match--empty .semi-bracket__match-label{color:#fca5a5}
 .semi-bracket__match-text{font-size:12px;line-height:1.3;font-weight:700;color:var(--text);overflow-wrap:anywhere;word-break:break-word}
 .semi-bracket__match--empty .semi-bracket__match-text{color:#fecaca}
+
+/* unified overview for semi/final/finish */
+.tourney-overview{display:flex;flex-direction:column;gap:12px;width:100%;padding-top:4px}
+.tourney-overview__head{display:grid;align-items:center;gap:8px;padding:0 4px}
+.tourney-overview__head--two{grid-template-columns:minmax(0,1.55fr) 20px minmax(0,1fr)}
+.tourney-overview__head--three{grid-template-columns:minmax(0,1.55fr) 20px minmax(0,1.1fr) 20px minmax(0,1.1fr)}
+.tourney-overview__head-col{font-size:9px;color:var(--text-dim);font-weight:700;letter-spacing:.5px;text-transform:uppercase;text-align:center}
+.tourney-overview__body{display:grid;align-items:center;gap:8px}
+.tourney-overview__body--two{grid-template-columns:minmax(0,1.55fr) 20px minmax(0,1fr)}
+.tourney-overview__body--three{grid-template-columns:minmax(0,1.55fr) 20px minmax(0,1.1fr) 20px minmax(0,1.1fr)}
+.tourney-overview__col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tourney-overview__pair{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tourney-overview__lines{display:flex;flex-direction:column;justify-content:space-around;align-self:stretch;gap:10px;min-width:20px}
+.tourney-overview__lines--single{justify-content:center}
+.tourney-overview__line{flex:1;position:relative;min-height:58px}
+.tourney-overview__line::before{content:'';position:absolute;top:18%;bottom:18%;right:4px;width:10px;border:1.5px solid var(--border);border-left:none;border-radius:0 8px 8px 0}
+.tourney-overview__line::after{content:'';position:absolute;left:0;top:50%;width:10px;height:1.5px;background:var(--border);transform:translateY(-50%)}
+.tourney-overview__final{display:flex;align-items:center;justify-content:center;min-width:0}
+.tourney-overview__final .bracket-cell{width:100%;min-height:56px}
 
 /* ── Sending overlay ── */
 .sending-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,26,.85);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px}
@@ -249,6 +271,14 @@ textarea::placeholder{color:var(--text-dim)}
   .semi-bracket__connector::before{right:2px;width:10px}
   .semi-bracket__match{min-height:64px;padding:9px 10px}
   .semi-bracket__match-text{font-size:11px}
+  .tourney-overview{gap:10px}
+  .tourney-overview__head--two,.tourney-overview__body--two{grid-template-columns:minmax(0,1.45fr) 16px minmax(0,1fr);gap:6px}
+  .tourney-overview__head--three,.tourney-overview__body--three{grid-template-columns:minmax(0,1.45fr) 16px minmax(0,1fr) 16px minmax(0,1fr);gap:6px}
+  .tourney-overview__lines{min-width:16px;gap:8px}
+  .tourney-overview__line{min-height:52px}
+  .tourney-overview__line::before{right:2px}
+  .tourney-overview__line::after{width:8px}
+  .tourney-overview__final .bracket-cell{min-height:52px}
 }
 @media (max-width:380px) {
   .iframe-wrap{height:min(calc(100dvh - 200px),600px);border-radius:14px}
@@ -792,6 +822,9 @@ function render() {
 // ══════════════════════════════════════
 // HANDLERS
 // ══════════════════════════════════════
+function logAnswer(id, value) {
+  logEvent('answer', id + ': ' + value);
+}
 function onInput(id) {
   if (!answers[id]) answers[id] = {};
   answers[id].value = document.getElementById('input-'+id).value;
@@ -803,6 +836,7 @@ function onChoice(id, i) {
   if (!answers[id]) answers[id] = {};
   answers[id].choiceIndex = i;
   answers[id].value = s.choices[i];
+  logAnswer(id, s.choices[i]);
   render();
 }
 function onMulti(id, i) {
@@ -849,6 +883,10 @@ function goNext() {
   const screens = buildScreens();
   const s = screens[current];
   if (!isAnswered(s)) return;
+  // Log textarea/multiselect answers on leaving the screen
+  if ((s.type === 'textarea' || s.type === 'multiselect') && answers[s.id] && answers[s.id].value) {
+    logAnswer(s.id, answers[s.id].value);
+  }
   if (current === screens.length - 2) { submitAnswers(); return; }
   current++;
   shouldAnimate = true;
