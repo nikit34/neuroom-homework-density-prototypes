@@ -843,169 +843,182 @@ button {
 }
 
 /* ═══════════════════════════════════════════════════
-   Calendar Week
+   Calendar Week (Journal-style, Figma mobile)
    ═══════════════════════════════════════════════════ */
 
-.cal-overdue-banner {
-  border: 1px solid rgba(212, 87, 87, 0.24);
-  border-radius: 16px;
-  padding: 14px 16px;
-  background: #fff6f6;
-}
-
-.cal-overdue-banner__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #d45757;
-}
-
-.cal-overdue-banner__count {
-  font-size: 12px;
-  font-weight: 500;
-  color: #d45757;
-  opacity: 0.6;
-  margin-left: 6px;
-}
-
-.cal-overdue-banner__items {
+.cal2-nav {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.cal-overdue-item {
-  border-left: 3px solid;
-  padding-left: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.cal-overdue-item__subject {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.cal-overdue-item__desc {
-  font-size: 11px;
-  color: var(--text-subtle);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cal-week {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.cal-week__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-subtle);
-}
-
-.cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-
-.cal-cell {
+.cal2-nav__btn {
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 6px 4px;
-  min-height: 72px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: #ffffff;
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text);
   transition: border-color 0.2s;
 }
 
-.cal-cell--today {
-  border-color: var(--purple);
-  background: rgba(116, 85, 255, 0.04);
+.cal2-nav__btn:hover {
+  border-color: rgba(116, 85, 255, 0.3);
 }
 
-.cal-cell__header {
+.cal2-nav__label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.cal2-rows {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1px;
+  gap: 0;
 }
 
-.cal-cell__day {
-  font-size: 8px;
-  font-weight: 500;
-  color: var(--text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.cal-cell__num {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1;
-}
-
-.cal-cell__num--today {
-  color: var(--purple);
-}
-
-.cal-cell__dots {
+.cal2-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.cal-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.cal2-row:last-child {
+  border-bottom: none;
+}
+
+.cal2-row__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal2-row__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
   flex-shrink: 0;
 }
 
-.cal-dot--missed,
-.cal-dot--resend {
-  box-shadow: 0 0 0 1.5px rgba(212, 87, 87, 0.5);
+.cal2-row__name {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--text);
 }
 
-.cal-dot--done {
-  opacity: 0.35;
+.cal2-row__count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-subtle);
 }
 
-.cal-cell__mini-list {
+.cal2-row__days {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cal2-day {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: auto;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
-.cal-mini {
-  border-left: 2px solid;
-  padding-left: 3px;
-}
-
-.cal-mini__text {
-  font-size: 7px;
+.cal2-day--today .cal2-day__label {
+  color: var(--purple);
   font-weight: 600;
+}
+
+.cal2-day__label {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
   color: var(--text);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
 }
 
-.cal-cell__more {
-  font-size: 8px;
-  color: var(--text-subtle);
-  text-align: center;
+.cal2-day__cells {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.cal2-cell {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cal2-cell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cal2-cell--empty {
+  background: transparent;
+  color: var(--border);
+  cursor: default;
+  font-size: 14px;
+}
+
+.cal2-cell--empty:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.cal2-cell--done {
+  background: var(--green-soft);
+  color: var(--green);
+  box-shadow: 0 4px 10px rgba(215, 255, 169, 0.2);
+}
+
+.cal2-cell--new {
+  background: rgba(116, 85, 255, 0.1);
+  color: var(--purple);
+}
+
+.cal2-cell--missed {
+  background: #ffd5d1;
+  color: #b91c1b;
+}
+
+.cal2-cell--resend {
+  background: #ffeec0;
+  color: #c2410b;
+}
+
+.cal2-cell--checked {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.cal2-cell--review {
+  background: var(--orange);
+  color: var(--text);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2045,48 +2058,17 @@ button {
   }
 
   /* ── Calendar Week ── */
-  .cal-grid {
-    gap: 3px;
+  .cal2-row__name {
+    font-size: 15px;
   }
 
-  .cal-cell {
-    padding: 4px 2px;
-    min-height: 64px;
-    border-radius: 8px;
-  }
-
-  .cal-cell__day {
-    font-size: 7px;
-  }
-
-  .cal-cell__num {
+  .cal2-day__label {
     font-size: 11px;
   }
 
-  .cal-dot {
-    width: 5px;
-    height: 5px;
-  }
-
-  .cal-mini__text {
-    font-size: 6px;
-  }
-
-  .cal-cell__more {
-    font-size: 7px;
-  }
-
-  .cal-overdue-banner {
-    padding: 12px 14px;
-    border-radius: 14px;
-  }
-
-  .cal-overdue-item__subject {
-    font-size: 11px;
-  }
-
-  .cal-overdue-item__desc {
-    font-size: 10px;
+  .cal2-cell {
+    min-height: 32px;
+    font-size: 14px;
   }
 
   /* ── Kanban ── */
@@ -2286,12 +2268,16 @@ button {
     font-size: 20px;
   }
 
-  .cal-cell {
-    min-height: 56px;
-    padding: 3px 2px;
+  .cal2-day__label {
+    font-size: 10px;
   }
 
-  .cal-mini {
-    display: none;
+  .cal2-cell {
+    min-height: 28px;
+    font-size: 13px;
+  }
+
+  .cal2-row__days {
+    gap: 4px;
   }
 }

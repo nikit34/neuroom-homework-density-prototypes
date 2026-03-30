@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
 
-/* ── Variant: Calendar Week ──
-   Недельная сетка. Дни недели = колонки, в каждой ячейке — точки/мини-карточки ДЗ.
-   Просроченные — отдельная строка сверху.
+/* ── Variant: Calendar Week (Journal-style, Figma mobile) ──
+   Навигация по неделям ← / →
+   Строки = предметы, колонки = будние дни (Пн-Пт)
+   Ячейки: статус ДЗ в виде цветных плиток
 */
 
 interface VariantCalendarWeekProps {
@@ -11,31 +12,32 @@ interface VariantCalendarWeekProps {
   onSelect?: (hw: HomeworkItem) => void;
 }
 
-function subjectColor(subjectId: number): string {
-  return SUBJECTS.find((s) => s.id === subjectId)?.color ?? "#999";
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
-function getWeekDays(): Date[] {
-  const now = new Date();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  monday.setHours(0, 0, 0, 0);
-
-  const days: Date[] = [];
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    days.push(d);
-  }
-  return days;
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
 }
 
 function dateKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-function formatDayName(d: Date): string {
-  return d.toLocaleDateString("ru-RU", { weekday: "short" });
+function formatShortDate(d: Date): string {
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+}
+
+function formatDayLabel(d: Date): string {
+  const weekday = d.toLocaleDateString("ru-RU", { weekday: "short" });
+  return `${weekday} ${d.getDate()}`;
 }
 
 function isToday(d: Date): boolean {
@@ -43,19 +45,23 @@ function isToday(d: Date): boolean {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
 }
 
-function statusDot(status: HomeworkItem["status"]): string {
-  switch (status) {
-    case "missed": return "cal-dot--missed";
-    case "resend": return "cal-dot--resend";
-    case "checked": return "cal-dot--checked";
-    case "in_review": return "cal-dot--review";
-    case "done": return "cal-dot--done";
-    default: return "";
+function statusCell(hw: HomeworkItem): { label: string; cls: string } {
+  switch (hw.status) {
+    case "done": return { label: hw.estimate ? String(hw.estimate) : "✓", cls: "cal2-cell--done" };
+    case "missed": return { label: "!", cls: "cal2-cell--missed" };
+    case "resend": return { label: "↩", cls: "cal2-cell--resend" };
+    case "checked": return { label: "✓", cls: "cal2-cell--checked" };
+    case "in_review": return { label: "…", cls: "cal2-cell--review" };
+    default: return { label: "●", cls: "cal2-cell--new" };
   }
 }
 
 export default function VariantCalendarWeek({ selectedSubjectId = null, onSelect }: VariantCalendarWeekProps) {
-  const days = useMemo(getWeekDays, []);
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const weekStart = useMemo(() => addDays(getWeekStart(new Date()), weekOffset * 7), [weekOffset]);
+  const weekDays = useMemo(() => Array.from({ length: 5 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+  const weekEnd = weekDays[4];
 
   const homework = useMemo(() => {
     let list = HOMEWORK_LIST;
@@ -63,96 +69,105 @@ export default function VariantCalendarWeek({ selectedSubjectId = null, onSelect
     return list;
   }, [selectedSubjectId]);
 
-  const hwByDate = useMemo(() => {
+  // Build lookup: subjectId:dateKey -> HomeworkItem[]
+  const hwMap = useMemo(() => {
     const map = new Map<string, HomeworkItem[]>();
     for (const hw of homework) {
       const d = new Date(hw.deadlineAt);
-      const key = dateKey(d);
+      const key = `${hw.subjectId}:${dateKey(d)}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(hw);
     }
     return map;
   }, [homework]);
 
-  const overdue = useMemo(() => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return homework.filter((hw) => {
-      const d = new Date(hw.deadlineAt);
-      d.setHours(0, 0, 0, 0);
-      return d < now && hw.status !== "done";
-    });
+  // Only show subjects that have homework in any week
+  const activeSubjects = useMemo(() => {
+    const ids = new Set(homework.map((hw) => hw.subjectId));
+    return SUBJECTS.filter((s) => ids.has(s.id));
   }, [homework]);
 
-  // Split into 2 weeks
-  const week1 = days.slice(0, 7);
-  const week2 = days.slice(7, 14);
+  // Count total HW for each subject this week
+  const subjectWeekCount = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const subj of activeSubjects) {
+      let count = 0;
+      for (const day of weekDays) {
+        const items = hwMap.get(`${subj.id}:${dateKey(day)}`) ?? [];
+        count += items.length;
+      }
+      counts.set(subj.id, count);
+    }
+    return counts;
+  }, [activeSubjects, weekDays, hwMap]);
 
   return (
     <div className="variant">
-      {/* Overdue banner */}
-      {overdue.length > 0 && (
-        <div className="cal-overdue-banner">
-          <span className="cal-overdue-banner__label">Просрочено</span>
-          <span className="cal-overdue-banner__count">{overdue.length}</span>
-          <div className="cal-overdue-banner__items">
-            {overdue.map((hw) => (
-              <div key={hw.id} className="cal-overdue-item" style={{ borderLeftColor: subjectColor(hw.subjectId), cursor: "pointer" }} onClick={() => onSelect?.(hw)}>
-                <span className="cal-overdue-item__subject">{hw.subject}</span>
-                <span className="cal-overdue-item__desc">{hw.description}</span>
+      {/* Week navigation */}
+      <div className="cal2-nav">
+        <button className="cal2-nav__btn" onClick={() => setWeekOffset((o) => o - 1)} type="button">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <span className="cal2-nav__label">
+          {formatShortDate(weekStart)} – {formatShortDate(weekEnd)}
+        </span>
+        <button className="cal2-nav__btn" onClick={() => setWeekOffset((o) => o + 1)} type="button">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Subject rows */}
+      <div className="cal2-rows">
+        {activeSubjects.map((subj) => {
+          const weekCount = subjectWeekCount.get(subj.id) ?? 0;
+
+          return (
+            <div key={subj.id} className="cal2-row">
+              <div className="cal2-row__header">
+                <span className="cal2-row__dot" style={{ background: subj.color }} />
+                <span className="cal2-row__name">{subj.name}</span>
+                {weekCount > 0 && <span className="cal2-row__count">{weekCount}</span>}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <div className="cal2-row__days">
+                {weekDays.map((day) => {
+                  const key = `${subj.id}:${dateKey(day)}`;
+                  const items = hwMap.get(key) ?? [];
+                  const today = isToday(day);
 
-      {/* Week grid */}
-      {[week1, week2].map((week, wi) => (
-        <div key={wi} className="cal-week">
-          <div className="cal-week__label">{wi === 0 ? "Эта неделя" : "Следующая"}</div>
-          <div className="cal-grid">
-            {week.map((day) => {
-              const key = dateKey(day);
-              const items = hwByDate.get(key) ?? [];
-              const today = isToday(day);
-
-              return (
-                <div key={key} className={`cal-cell ${today ? "cal-cell--today" : ""}`}>
-                  <div className="cal-cell__header">
-                    <span className="cal-cell__day">{formatDayName(day)}</span>
-                    <span className={`cal-cell__num ${today ? "cal-cell__num--today" : ""}`}>
-                      {day.getDate()}
-                    </span>
-                  </div>
-                  <div className="cal-cell__dots">
-                    {items.map((hw) => (
-                      <div
-                        key={hw.id}
-                        className={`cal-dot ${statusDot(hw.status)}`}
-                        style={{ background: subjectColor(hw.subjectId), cursor: "pointer" }}
-                        title={`${hw.subject}: ${hw.description}`}
-                        onClick={() => onSelect?.(hw)}
-                      />
-                    ))}
-                  </div>
-                  {items.length > 0 && (
-                    <div className="cal-cell__mini-list">
-                      {items.slice(0, 2).map((hw) => (
-                        <div key={hw.id} className="cal-mini" style={{ borderLeftColor: subjectColor(hw.subjectId), cursor: "pointer" }} onClick={() => onSelect?.(hw)}>
-                          <span className="cal-mini__text">{hw.subject}</span>
-                        </div>
-                      ))}
-                      {items.length > 2 && (
-                        <span className="cal-cell__more">+{items.length - 2}</span>
-                      )}
+                  return (
+                    <div key={dateKey(day)} className={`cal2-day ${today ? "cal2-day--today" : ""}`}>
+                      <span className="cal2-day__label">{formatDayLabel(day)}</span>
+                      <div className="cal2-day__cells">
+                        {items.length === 0 && <div className="cal2-cell cal2-cell--empty">—</div>}
+                        {items.map((hw) => {
+                          const st = statusCell(hw);
+                          return (
+                            <div
+                              key={hw.id}
+                              className={`cal2-cell ${st.cls}`}
+                              onClick={() => onSelect?.(hw)}
+                            >
+                              {st.label}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {activeSubjects.length === 0 && (
+        <div className="empty-state">Нет заданий на эту неделю</div>
+      )}
     </div>
   );
 }
