@@ -99,6 +99,21 @@ button {
   box-shadow: 0 6px 18px rgba(35, 35, 35, 0.06);
 }
 
+/* ── Embed mode: no chrome, full viewport ── */
+.proto-shell--embed {
+  padding: 0;
+  gap: 0;
+  min-height: auto;
+}
+.proto-shell--embed .proto-phone {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .app-topbar {
   display: flex;
   align-items: center;

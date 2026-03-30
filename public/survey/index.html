@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f1a">
+<title>Neuroom — Опрос: экран заданий</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<style>
+:root {
+  --bg: #0f0f1a;
+  --card: #1a1a2e;
+  --accent: #7c5cfc;
+  --accent-light: #a78bfa;
+  --accent-glow: rgba(124,92,252,.3);
+  --text: #e8e8f0;
+  --text-dim: #8888a0;
+  --success: #34d399;
+  --border: #2a2a40;
+  --input-bg: #12121f;
+  --radius: 16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;height:-webkit-fill-available}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh;min-height:-webkit-fill-available;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+
+/* ── Bg ── */
+.bg-layer{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12;animation:bd 20s ease-in-out infinite alternate}
+.blob-1{width:300px;height:300px;background:var(--accent);top:-80px;left:-60px}
+.blob-2{width:250px;height:250px;background:var(--accent-light);bottom:10%;right:-50px;animation-delay:-7s}
+@keyframes bd{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,-30px) scale(1.15)}}
+
+/* ── Progress ── */
+.progress-wrap{position:fixed;top:0;left:0;right:0;z-index:100;height:4px;background:var(--border);top:env(safe-area-inset-top,0)}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#ec4899,#f59e0b);background-size:200% 100%;animation:sh 3s ease-in-out infinite;transition:width .5s cubic-bezier(.4,0,.2,1);border-radius:0 3px 3px 0}
+@keyframes sh{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+
+/* ── App container ── */
+.app{
+  max-width:414px;margin:0 auto;
+  padding:16px 16px 130px;
+  padding-top:calc(env(safe-area-inset-top,0)+12px);
+  min-height:100dvh;display:flex;flex-direction:column;
+}
+
+/* ── Screen ── */
+.screen{display:none;flex-direction:column;gap:16px;flex:1}
+.screen.active{display:flex}
+.screen.anim{animation:fu .4s cubic-bezier(.2,.8,.3,1)}
+@keyframes fu{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* ── Question elements ── */
+.q-icon{font-size:42px;text-align:center}
+.anim .q-icon{animation:bi .5s cubic-bezier(.2,.8,.3,1.2)}
+@keyframes bi{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.2) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.q-number{font-size:12px;color:var(--accent-light);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.q-text{font-size:20px;font-weight:700;line-height:1.35}
+.q-hint{font-size:13px;color:var(--text-dim);line-height:1.5}
+
+/* ── Inputs ── */
+textarea{width:100%;min-height:90px;background:var(--input-bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:16px;font-family:inherit;padding:14px;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+textarea::placeholder{color:var(--text-dim)}
+
+/* ── Choice ── */
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:var(--input-bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:15px;font-family:inherit;padding:14px 16px;min-height:48px;text-align:left;cursor:pointer;transition:all .2s;line-height:1.4}
+.choice-btn:active{border-color:var(--accent);background:rgba(124,92,252,.12)}
+.choice-btn.selected{border-color:var(--accent);background:rgba(124,92,252,.15);box-shadow:0 0 0 1px var(--accent)}
+
+/* ── Chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--input-bg);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;padding:10px 14px;min-height:44px;display:flex;align-items:center;cursor:pointer;transition:all .25s;user-select:none;line-height:1.3}
+.chip:active{border-color:var(--accent);background:rgba(124,92,252,.12);transform:scale(.97)}
+.chip.selected{border-color:var(--accent);background:rgba(124,92,252,.18);box-shadow:0 0 0 1px var(--accent),0 4px 12px var(--accent-glow);transform:translateY(-2px)}
+
+/* ── Nav ── */
+.nav{position:fixed;bottom:8px;bottom:max(env(safe-area-inset-bottom,0),8px);left:0;right:0;padding:12px 16px 12px;background:linear-gradient(transparent,var(--bg) 25%);display:flex;gap:10px;justify-content:center;z-index:50}
+.nav-btn{flex:1;max-width:200px;padding:16px 20px;border-radius:14px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;border:none;min-height:50px}
+.btn-back{background:var(--card);color:var(--text-dim)}
+.btn-back:active{background:var(--border)}
+.btn-next{background:linear-gradient(135deg,var(--accent),#9333ea);color:#fff;box-shadow:0 4px 15px var(--accent-glow)}
+.btn-next:active:not(:disabled){transform:scale(.97)}
+.btn-next:disabled{opacity:.4;cursor:default}
+
+/* ── Welcome / Finish ── */
+.welcome-icon{font-size:60px;text-align:center;margin-top:20px;animation:fl 3s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translateY(0)}25%{transform:translateY(-8px)}75%{transform:translateY(4px)}}
+.welcome-title{font-size:22px;font-weight:800;text-align:center;line-height:1.3;background:linear-gradient(135deg,var(--text),var(--accent-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;padding:0 8px}
+.welcome-sub{font-size:14px;color:var(--text-dim);text-align:center;line-height:1.6}
+.welcome-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pill{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:13px;color:var(--text-dim);animation:fu .5s ease-out both}
+.pill:nth-child(1){animation-delay:.1s}.pill:nth-child(2){animation-delay:.2s}.pill:nth-child(3){animation-delay:.3s}
+.finish-icon{font-size:64px;text-align:center;margin-top:40px;animation:fp .6s cubic-bezier(.2,.8,.3,1.3)}
+@keyframes fp{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.3) rotate(10deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.finish-title{font-size:24px;font-weight:800;text-align:center;background:linear-gradient(135deg,var(--success),#60a5fa,var(--accent-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.finish-sub{font-size:14px;color:var(--text-dim);text-align:center;line-height:1.6}
+
+/* ── Round intro ── */
+.round-badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
+.round-title{font-size:20px;font-weight:800;line-height:1.3;text-align:center}
+.round-desc{font-size:14px;color:var(--text-dim);text-align:center;line-height:1.6}
+.reveal-text{font-size:16px;color:var(--text);text-align:center;line-height:1.7;font-weight:500;min-height:60px}
+.reveal-text .rw{display:inline;opacity:0;transition:opacity .25s ease}
+.reveal-text .rw.visible{opacity:1}
+
+/* ══ Iframe mockup ══ */
+.mockup-variant{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:16px;margin-bottom:8px}
+.mockup-variant.variant-a{background:linear-gradient(135deg,#7c5cfc,#9333ea)}
+.mockup-variant.variant-b{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.mockup-variant-letter{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0}
+.mockup-variant-text{flex:1}
+.mockup-variant-title{font-size:16px;font-weight:700;color:#fff}
+.mockup-variant-desc{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}
+
+.iframe-wrap{
+  width:100%;max-width:375px;
+  height:min(calc(100dvh - 240px), 700px);
+  margin:0 auto;
+  border-radius:24px;
+  border:3px solid #1d1d1f;
+  overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+  position:relative;
+  background:#fff;
+}
+.iframe-wrap iframe{
+  width:100%;height:100%;border:none;
+  display:block;
+}
+.iframe-loader{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:#f5f5f5;color:#7c7c87;font-size:14px;z-index:2;
+  transition:opacity .3s;
+}
+.iframe-loader.hidden{opacity:0;pointer-events:none}
+.mockup-instruction{text-align:center;font-size:14px;font-weight:600;color:var(--accent-light);margin-bottom:6px;padding:8px 14px;background:rgba(124,92,252,.1);border:1.5px solid rgba(124,92,252,.25);border-radius:12px}
+
+/* ── Sending overlay ── */
+.sending-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,26,.85);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.sending-overlay.visible{display:flex}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Confetti ── */
+#confetti{position:fixed;inset:0;z-index:100;pointer-events:none}
+
+/* ── Halfway ── */
+.halfway-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:linear-gradient(135deg,#7c5cfc,#ec4899);color:#fff;font-size:14px;font-weight:700;padding:10px 20px;border-radius:30px;z-index:150;pointer-events:none;white-space:nowrap;box-shadow:0 8px 30px rgba(124,92,252,.4)}
+.halfway-toast.show{animation:ts 2.5s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes ts{0%{transform:translateX(-50%) translateY(-100px);opacity:0}15%{transform:translateX(-50%) translateY(0);opacity:1}80%{transform:translateX(-50%) translateY(0);opacity:1}100%{transform:translateX(-50%) translateY(-100px);opacity:0}}
+
+/* ── Mobile ── */
+@media (max-width:430px) {
+  .app{padding:10px 14px 120px;padding-top:calc(env(safe-area-inset-top,0)+8px)}
+  .screen{gap:12px}
+  .q-icon{font-size:36px}
+  .q-text{font-size:18px}
+  .q-hint{font-size:12px}
+  .welcome-icon{font-size:50px;margin-top:10px}
+  .welcome-title{font-size:20px}
+  .welcome-sub{font-size:13px}
+  .finish-icon{font-size:52px;margin-top:24px}
+  .finish-title{font-size:22px}
+  .round-title{font-size:18px}
+  .reveal-text{font-size:15px;min-height:50px}
+  .iframe-wrap{max-width:100%;border-radius:18px;border-width:2px;height:min(calc(100dvh - 220px),700px)}
+  .mockup-variant{padding:10px 14px;gap:10px;margin-bottom:4px;border-radius:12px}
+  .mockup-variant-letter{width:34px;height:34px;font-size:17px;border-radius:10px}
+  .mockup-variant-title{font-size:14px}
+  .mockup-variant-desc{font-size:11px}
+  .mockup-instruction{font-size:13px;margin-bottom:4px;padding:7px 12px}
+  .nav{bottom:10px;bottom:max(env(safe-area-inset-bottom,0),10px);padding:10px 14px 10px}
+  .nav-btn{padding:14px 16px;font-size:15px;border-radius:12px;min-height:46px}
+  textarea{min-height:80px;font-size:16px;padding:12px}
+  .choice-btn{padding:12px 14px;font-size:14px}
+  .chip{padding:10px 12px;font-size:13px}
+}
+@media (max-width:380px) {
+  .iframe-wrap{height:min(calc(100dvh - 200px),600px);border-radius:14px}
+  .q-text{font-size:16px}
+  .mockup-variant{padding:8px 12px}
+  .mockup-variant-letter{width:30px;height:30px;font-size:15px}
+  .mockup-variant-title{font-size:13px}
+}
+@supports(-webkit-touch-callout:none){body{height:-webkit-fill-available}textarea:focus{scroll-margin-bottom:160px}}
+</style>
+</head>
+<body>
+
+<div class="bg-layer"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<div class="app" id="app"></div>
+
+<div class="nav" id="nav" style="display:none">
+  <button class="nav-btn btn-back" id="btnBack" onclick="goBack()">Назад</button>
+  <button class="nav-btn btn-next" id="btnNext" onclick="goNext()">Дальше</button>
+</div>
+
+<div class="halfway-toast" id="halfwayToast">&#128170; Половина позади!</div>
+<canvas id="confetti"></canvas>
+<div class="sending-overlay" id="sendingOverlay"><div class="spinner"></div><div style="color:var(--text-dim);font-size:15px">Отправляем...</div></div>
+
+<script>
+const GOOGLE_SCRIPT_URL = '';
+
+// Base URL of the app (matches vite.config.ts base)
+const APP_BASE = '/neuroom-homework-density-prototypes/';
+
+function iframeMockup(path, iframeId) {
+  const src = APP_BASE + path + (path.includes('?') ? '&' : '?') + 'embed=1';
+  return `
+  <div class="iframe-wrap">
+    <div class="iframe-loader" id="loader-${iframeId}">Загрузка экрана...</div>
+    <iframe id="${iframeId}" src="${src}" loading="lazy" onload="document.getElementById('loader-${iframeId}').classList.add('hidden');enableIframeUnlock('${iframeId}')"></iframe>
+  </div>`;
+}
+
+// ══════════════════════════════════════
+// WORD-BY-WORD REVEAL
+// ══════════════════════════════════════
+function revealWords(el, text, onDone) {
+  const words = text.split(' ');
+  el.innerHTML = words.map(w => `<span class="rw">${w} </span>`).join('');
+  const spans = el.querySelectorAll('.rw');
+  let i = 0;
+  function next() {
+    if (i >= spans.length) { if (onDone) onDone(); return; }
+    spans[i].classList.add('visible');
+    i++;
+    setTimeout(next, 120);
+  }
+  setTimeout(next, 300);
+}
+
+// Unlock Next button after viewing iframe
+function enableIframeUnlock(iframeId) {
+  setTimeout(() => {
+    document.getElementById('btnNext').disabled = false;
+  }, 2500);
+}
+
+// ══════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════
+const screens = [
+  // 0 - Welcome
+  { id:'welcome', type:'welcome' },
+
+  // ── Round 1: Lists ──
+  { id:'r1_intro', type:'round_intro', round:'Раунд 1 из 4', title:'Списки заданий', desc:'Сейчас ты увидишь два способа показать задания списком. Прокрути каждый экран и посмотри, как устроено.' },
+  { id:'r1_filter', type:'mockup', variant:'a', variantTitle:'Простой список', variantDesc:'Все задания подряд с фильтром по предмету', instruction:'Прокрути экран и посмотри', path:'' },
+  { id:'r1_priority', type:'mockup', variant:'b', variantTitle:'Список по приоритету', variantDesc:'Задания разбиты по важности: сначала горящие', instruction:'Прокрути и сравни с предыдущим', path:'priority' },
+  { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:10, text:'Какой список удобнее?', choices:['Простой список с фильтром','Список по приоритету','Оба нормально','Оба не понравились'], required:true },
+  { id:'r1_q2', type:'textarea', icon:'&#128172;', number:2, total:10, text:'Почему выбрал(а) именно этот?', placeholder:'Мне удобнее, потому что...', required:false },
+
+  // ── Round 2: Calendar & Time ──
+  { id:'r2_intro', type:'round_intro', round:'Раунд 2 из 4', title:'Время и календарь', desc:'Теперь посмотри, как задания можно показать на временной шкале и в календаре.' },
+  { id:'r2_timeline', type:'mockup', variant:'a', variantTitle:'Таймлайн', variantDesc:'Вертикальная линия времени по дням', instruction:'Прокрути экран и посмотри', path:'timeline' },
+  { id:'r2_calendar', type:'mockup', variant:'b', variantTitle:'Календарь на неделю', variantDesc:'Дни недели с заданиями в каждом', instruction:'Прокрути и сравни', path:'calendar' },
+  { id:'r2_q1', type:'choice', icon:'&#128197;', number:3, total:10, text:'Где проще найти нужное задание?', choices:['Таймлайн — видно что когда','Календарь — привычнее','Одинаково','Оба неудобные'], required:true },
+  { id:'r2_q2', type:'textarea', icon:'&#128221;', number:4, total:10, text:'Что именно удобнее или понятнее?', placeholder:'Мне понятнее, когда...', required:false },
+
+  // ── Round 3: Boards ──
+  { id:'r3_intro', type:'round_intro', round:'Раунд 3 из 4', title:'Доски и таблицы', desc:'А здесь задания показаны как доска со столбцами и как таблица «дни × предметы».' },
+  { id:'r3_kanban', type:'mockup', variant:'a', variantTitle:'Канбан-доска', variantDesc:'Столбцы по статусу: активные, на проверке, сдано', instruction:'Листай колонки влево-вправо', path:'kanban' },
+  { id:'r3_matrix', type:'mockup', variant:'b', variantTitle:'Таблица «Дни × Предметы»', variantDesc:'Строки = дни, столбцы = предметы, ячейки = задания', instruction:'Посмотри на таблицу', path:'matrix' },
+  { id:'r3_q1', type:'choice', icon:'&#128202;', number:5, total:10, text:'Что помогает лучше понять, что делать?', choices:['Канбан-доска — видно статусы','Таблица — видно всё сразу','Одинаково','Оба запутывают'], required:true },
+  { id:'r3_q2', type:'textarea', icon:'&#128221;', number:6, total:10, text:'Почему именно этот?', placeholder:'Этот удобнее, потому что...', required:false },
+
+  // ── Round 4: Quick Wins ──
+  { id:'r4_intro', type:'round_intro', round:'Раунд 4 из 4', title:'Умная очередь', desc:'Последний вариант: приложение само подсказывает, в каком порядке делать задания — от простых и срочных к сложным.' },
+  { id:'r4_qw', type:'mockup', variant:'a', variantTitle:'Quick Wins — с чего начать', variantDesc:'Автоматическая очередь: сначала лёгкое и срочное', instruction:'Прокрути список — задания расставлены по порядку', path:'quick-wins' },
+  { id:'qw_q1', type:'choice', icon:'&#9889;', number:7, total:10, text:'Полезно, когда приложение подсказывает, с чего начать?', choices:['Да, очень — не надо думать','Немного помогает','Всё равно','Нет, сам(а) разберусь'], required:true },
+
+  // ── Overall ──
+  { id:'imp_q1', type:'multiselect', icon:'&#127775;', number:8, total:10, text:'Что для тебя самое важное на экране с домашкой?', hint:'Можно выбрать несколько.', options:[{label:'Быстро найти нужное задание'},{label:'Видеть сроки и дедлайны'},{label:'Понимать статус (сдано / не сдано)'},{label:'Не запутаться, когда много заданий'},{label:'Видеть все предметы сразу'},{label:'Знать с чего начать'},{label:'Красивый и понятный вид'}], required:true, minSelect:1 },
+  { id:'top_q1', type:'multiselect', icon:'&#127942;', number:9, total:10, text:'Выбери варианты, которые хочешь видеть в приложении', hint:'Можно выбрать от 1 до 3.', options:[{label:'Простой список (с фильтром)'},{label:'Список по приоритету'},{label:'Таймлайн'},{label:'Календарь на неделю'},{label:'Канбан-доска'},{label:'Таблица (дни × предметы)'},{label:'Quick Wins (умная очередь)'}], required:true, minSelect:1, maxSelect:3 },
+  { id:'f_q1', type:'multiselect', icon:'&#128161;', number:10, total:10, text:'Чего не хватает на этих экранах?', hint:'Выбери всё важное.', options:[{label:'Напоминания о дедлайнах'},{label:'Оценка сложности задания'},{label:'Сколько времени займёт'},{label:'Комментарии от учителя'},{label:'Группировка по предмету'},{label:'Поиск по заданиям'},{label:'Прогресс за неделю'},{label:'Всего хватает',exclusive:true}], required:true, minSelect:1 },
+
+  // Finish
+  { id:'finish', type:'finish' },
+];
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let current = 0;
+const answers = {};
+let shouldAnimate = true;
+let halfwayShown = false;
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  const s = screens[current];
+  const nav = document.getElementById('nav');
+
+  // Progress
+  const pct = s.type === 'finish' ? 100 : s.type === 'welcome' ? 0 : (current / (screens.length-1) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+
+  // Halfway
+  if (current === Math.floor(screens.length/2) && !halfwayShown) {
+    halfwayShown = true;
+    const t = document.getElementById('halfwayToast'); t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  const ac = shouldAnimate ? ' anim' : '';
+  shouldAnimate = false;
+  let html = `<div class="screen active${ac}">`;
+
+  if (s.type === 'welcome') {
+    html += `
+      <div class="welcome-icon">&#128203;</div>
+      <div class="welcome-title">Посмотри 7 вариантов экрана «Задания» и выбери, какой нравится больше</div>
+      <div class="welcome-sub">
+        В каждом раунде — два экрана для сравнения.<br><br>
+        Посмотри оба, потом ответь на вопросы.<br>
+        Правильных ответов нет — нам важно твоё мнение.
+      </div>
+      <div class="welcome-pills">
+        <div class="pill">&#9201; 5 минут</div>
+        <div class="pill">4 раунда + 10 вопросов</div>
+        <div class="pill">&#128274; анонимно</div>
+      </div>`;
+    nav.style.display = 'flex';
+    document.getElementById('btnBack').style.display = 'none';
+    document.getElementById('btnNext').textContent = 'Начать';
+    document.getElementById('btnNext').disabled = false;
+    html += '</div>';
+    app.innerHTML = html;
+    return;
+  }
+
+  if (s.type === 'finish') {
+    html += `
+      <div class="finish-icon">&#127881;</div>
+      <div class="finish-title">Готово!</div>
+      <div class="finish-sub">Спасибо! Твои ответы помогут сделать экран заданий удобнее.</div>`;
+    nav.style.display = 'none';
+    html += '</div>';
+    app.innerHTML = html;
+    launchConfetti();
+    return;
+  }
+
+  if (s.type === 'round_intro') {
+    html += `
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;text-align:center">
+        <div class="round-badge">${s.round}</div>
+        <div class="round-title">${s.title}</div>
+        <div class="reveal-text" id="revealTarget"></div>
+      </div>`;
+    nav.style.display = 'flex';
+    document.getElementById('btnBack').style.display = current > 1 ? '' : 'none';
+    document.getElementById('btnNext').textContent = 'Дальше';
+    document.getElementById('btnNext').disabled = true;
+    html += '</div>';
+    app.innerHTML = html;
+    revealWords(document.getElementById('revealTarget'), s.desc, () => {
+      document.getElementById('btnNext').disabled = false;
+    });
+    return;
+  }
+
+  if (s.type === 'mockup') {
+    const isA = s.variant === 'a';
+    const letter = isA ? 'А' : 'Б';
+    const cls = isA ? 'variant-a' : 'variant-b';
+    html += `<div class="mockup-variant ${cls}">
+      <div class="mockup-variant-letter">${letter}</div>
+      <div class="mockup-variant-text">
+        <div class="mockup-variant-title">${s.variantTitle}</div>
+        <div class="mockup-variant-desc">${s.variantDesc}</div>
+      </div>
+    </div>`;
+    html += `<div class="mockup-instruction">&#11015; ${s.instruction}</div>`;
+
+    const iframeId = 'iframe-' + s.id;
+    html += iframeMockup(s.path, iframeId);
+
+    nav.style.display = 'flex';
+    document.getElementById('btnBack').style.display = current > 1 ? '' : 'none';
+    document.getElementById('btnNext').textContent = 'Дальше';
+    document.getElementById('btnNext').disabled = true;
+    html += '</div>';
+    app.innerHTML = html;
+    return;
+  }
+
+  // ── Regular question ──
+  nav.style.display = 'flex';
+  document.getElementById('btnBack').style.display = current > 1 ? '' : 'none';
+  document.getElementById('btnNext').textContent = current === screens.length - 2 ? 'Отправить' : 'Дальше';
+
+  if (s.icon) html += `<div class="q-icon">${s.icon}</div>`;
+  if (s.number) html += `<div class="q-number">Вопрос ${s.number} из ${s.total}</div>`;
+  html += `<div class="q-text">${s.text}</div>`;
+  if (s.hint) html += `<div class="q-hint">${s.hint}</div>`;
+
+  const saved = answers[s.id] || {};
+
+  if (s.type === 'textarea') {
+    html += `<textarea id="input-${s.id}" placeholder="${s.placeholder||''}" oninput="onInput('${s.id}')">${saved.value||''}</textarea>`;
+  }
+  if (s.type === 'choice') {
+    html += '<div class="choices">';
+    s.choices.forEach((c,i) => {
+      html += `<button class="choice-btn ${saved.choiceIndex===i?'selected':''}" onclick="onChoice('${s.id}',${i})">${c}</button>`;
+    });
+    html += '</div>';
+  }
+  if (s.type === 'multiselect') {
+    const sel = saved.selected || [];
+    html += '<div class="chips">';
+    s.options.forEach((o,i) => {
+      html += `<button class="chip ${sel.includes(i)?'selected':''}" onclick="onMulti('${s.id}',${i})">${o.label}</button>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  app.innerHTML = html;
+  updateNextBtn();
+}
+
+// ══════════════════════════════════════
+// HANDLERS
+// ══════════════════════════════════════
+function onInput(id) {
+  if (!answers[id]) answers[id] = {};
+  answers[id].value = document.getElementById('input-'+id).value;
+  updateNextBtn();
+}
+function onChoice(id, i) {
+  const s = screens.find(s=>s.id===id);
+  if (!answers[id]) answers[id] = {};
+  answers[id].choiceIndex = i;
+  answers[id].value = s.choices[i];
+  render();
+}
+function onMulti(id, i) {
+  const s = screens.find(s=>s.id===id);
+  if (!answers[id]) answers[id] = {selected:[]};
+  if (!answers[id].selected) answers[id].selected = [];
+  const opt = s.options[i];
+  const maxSel = s.maxSelect || Infinity;
+  if (opt.exclusive) {
+    answers[id].selected = answers[id].selected.includes(i) ? [] : [i];
+  } else {
+    const excl = s.options.map((o,j)=>o.exclusive?j:-1).filter(j=>j>=0);
+    answers[id].selected = answers[id].selected.filter(j=>!excl.includes(j));
+    const p = answers[id].selected.indexOf(i);
+    if (p >= 0) {
+      answers[id].selected.splice(p,1);
+    } else {
+      if (answers[id].selected.length < maxSel) {
+        answers[id].selected.push(i);
+      }
+    }
+  }
+  answers[id].value = answers[id].selected.map(j=>s.options[j].label).join(', ');
+  render();
+}
+
+function isAnswered(s) {
+  if (['welcome','finish','round_intro','mockup'].includes(s.type)) return true;
+  const a = answers[s.id];
+  if (!s.required) return true;
+  if (!a) return false;
+  if (s.type==='textarea') return (a.value||'').trim().length > 0;
+  if (s.type==='choice') return a.choiceIndex !== undefined;
+  if (s.type==='multiselect') return (a.selected||[]).length >= (s.minSelect||1);
+  return true;
+}
+function updateNextBtn() {
+  document.getElementById('btnNext').disabled = !isAnswered(screens[current]);
+}
+
+function goNext() {
+  const s = screens[current];
+  if (!isAnswered(s)) return;
+  if (current === screens.length - 2) { submitAnswers(); return; }
+  current++;
+  shouldAnimate = true;
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goBack() {
+  if (current > 1) {
+    current--;
+    shouldAnimate = true;
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+// ══════════════════════════════════════
+// SUBMIT
+// ══════════════════════════════════════
+async function submitAnswers() {
+  const ov = document.getElementById('sendingOverlay'); ov.classList.add('visible');
+  const data = { timestamp: new Date().toISOString() };
+  screens.forEach(s => {
+    if (['welcome','finish','round_intro','mockup'].includes(s.type)) return;
+    const a = answers[s.id] || {};
+    data[s.id] = a.value || '';
+  });
+  if (GOOGLE_SCRIPT_URL) {
+    try { await fetch(GOOGLE_SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); } catch(e) { saveLocal(data); }
+  } else { saveLocal(data); }
+  ov.classList.remove('visible');
+  current = screens.length - 1;
+  shouldAnimate = true;
+  render();
+}
+function saveLocal(data) {
+  const k = 'neuroom_hwdensity_survey';
+  const e = JSON.parse(localStorage.getItem(k)||'[]');
+  e.push(data);
+  localStorage.setItem(k, JSON.stringify(e));
+}
+
+// ── Confetti ──
+const cc = document.getElementById('confetti');
+const cx = cc.getContext('2d');
+let cp = [], cr = false;
+function resizeC(){cc.width=innerWidth;cc.height=innerHeight}
+addEventListener('resize',resizeC);resizeC();
+function launchConfetti(){
+  cp=[];const cols=['#7c5cfc','#a78bfa','#ec4899','#34d399','#f59e0b','#60a5fa'];
+  for(let i=0;i<60;i++) cp.push({x:cc.width/2+(Math.random()-.5)*120,y:cc.height*.4,vx:(Math.random()-.5)*10,vy:-8-Math.random()*10,sz:4+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],r:Math.random()*360,rs:(Math.random()-.5)*10,l:1});
+  if(!cr){cr=true;animC();}
+}
+function animC(){
+  cx.clearRect(0,0,cc.width,cc.height);
+  cp=cp.filter(p=>p.l>0);
+  if(!cp.length){cr=false;return;}
+  cp.forEach(p=>{p.x+=p.vx;p.vy+=.3;p.y+=p.vy;p.r+=p.rs;p.l-=.008;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r*Math.PI/180);cx.globalAlpha=Math.max(0,p.l);cx.fillStyle=p.c;cx.fillRect(-p.sz/2,-p.sz/4,p.sz,p.sz/2);cx.restore()});
+  requestAnimationFrame(animC);
+}
+
+// iOS keyboard
+if (window.visualViewport) {
+  const nav = document.getElementById('nav');
+  function adjustNav() {
+    const vv = window.visualViewport;
+    const offset = window.innerHeight - vv.height - vv.offsetTop;
+    nav.style.bottom = offset > 50 ? offset + 'px' : '';
+  }
+  window.visualViewport.addEventListener('resize', adjustNav);
+  window.visualViewport.addEventListener('scroll', adjustNav);
+}
+
+document.addEventListener('focusin', e => {
+  if (e.target.matches('textarea')) {
+    setTimeout(() => e.target.scrollIntoView({behavior:'smooth',block:'center'}), 300);
+  }
+});
+
+render();
+</script>
+</body>
+</html>

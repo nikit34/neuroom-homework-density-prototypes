@@ -46,21 +46,24 @@ function App() {
   const [selectedHw, setSelectedHw] = useState<HomeworkItem | null>(null);
 
   const showFilter = activeTab === "figma";
+  const isEmbed = new URLSearchParams(location.search).has("embed");
 
   return (
-    <div className="proto-shell">
-      <div className="proto-toolbar" role="tablist" aria-label="Prototype switcher">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            className={`proto-tab ${activeTab === tab.key ? "proto-tab--active" : ""}`}
-            onClick={() => navigate(tab.path)}
-            type="button"
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <div className={`proto-shell${isEmbed ? " proto-shell--embed" : ""}`}>
+      {!isEmbed && (
+        <div className="proto-toolbar" role="tablist" aria-label="Prototype switcher">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              className={`proto-tab ${activeTab === tab.key ? "proto-tab--active" : ""}`}
+              onClick={() => navigate(tab.path)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="proto-phone">
         <div className="app-topbar">
