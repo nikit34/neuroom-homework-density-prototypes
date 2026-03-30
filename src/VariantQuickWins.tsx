@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
+import { HOMEWORK_LIST, SUBJECTS, isOverdue, type HomeworkItem } from "./mockData";
 import HwCard from "./HwCard";
 
 interface VariantQuickWinsProps {
@@ -47,7 +47,7 @@ function estimateEffortMinutes(hw: HomeworkItem): number {
     estimate += 5;
   }
 
-  if (hw.status === "missed" || hw.status === "resend") {
+  if (isOverdue(hw) || hw.status === 25) {
     estimate += 5;
   }
 
@@ -67,14 +67,14 @@ function toQuickTask(hw: HomeworkItem): QuickTask {
 }
 
 function compareQuickTasks(a: QuickTask, b: QuickTask): number {
-  const statusPriority = (status: HomeworkItem["status"]): number => {
-    if (status === "missed") return 0;
-    if (status === "resend") return 1;
+  const taskPriority = (task: QuickTask): number => {
+    if (isOverdue(task)) return 0;
+    if (task.status === 25) return 1;
     return 2;
   };
 
   return (
-    statusPriority(a.status) - statusPriority(b.status) ||
+    taskPriority(a) - taskPriority(b) ||
     a.dayDiff - b.dayDiff ||
     a.effortMinutes - b.effortMinutes
   );
@@ -106,8 +106,8 @@ function QuickTaskCard({ task, onSelect }: { task: QuickTask; onSelect?: (hw: Ho
 
       <div className="qw-card__meta">
         <span className="qw-card__deadline">{formatDueLabel(task.dayDiff)}</span>
-        {task.status === "resend" && <span className="qw-card__badge">Пересдача</span>}
-        {task.status === "missed" && (
+        {task.status === 25 && <span className="qw-card__badge">Пересдача</span>}
+        {isOverdue(task) && (
           <span className="qw-card__badge qw-card__badge--danger">Долг</span>
         )}
       </div>
@@ -132,7 +132,7 @@ export default function VariantQuickWins({
   );
 
   const actionableTasks = useMemo(
-    () => visibleHomework.filter((hw) => hw.status === "new" || hw.status === "missed" || hw.status === "resend"),
+    () => visibleHomework.filter((hw) => hw.status === 10 || hw.status === 25),
     [visibleHomework],
   );
 

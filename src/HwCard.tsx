@@ -1,4 +1,4 @@
-import type { HomeworkItem } from "./mockData";
+import { isOverdue, type HomeworkItem } from "./mockData";
 import iconAlarm from "./assets/icon-alarm.svg";
 import iconAttach from "./assets/icon-attach.svg";
 import iconCalendar from "./assets/icon-calendar.svg";
@@ -55,56 +55,35 @@ function formatDeadline(dateStr: string): string {
 }
 
 function getCardViewModel(hw: HomeworkItem): CardViewModel {
-  switch (hw.status) {
-    case "in_review":
-      return {
-        tone: "waiting",
-        badgeText: "На проверке",
-        badgeVariant: "waiting",
-        badgeIcon: iconWaiting,
-      };
-    case "checked":
-      return {
-        tone: "checked",
-        badgeText: "Проверено",
-        badgeVariant: "checked",
-      };
-    case "done":
-      if (typeof hw.estimate === "number") {
-        return {
-          tone: "score",
-          score: hw.estimate,
-        };
-      }
-
-      return {
-        tone: "checked",
-        badgeText: "Сдано",
-        badgeVariant: "checked",
-      };
-    case "resend":
-      return {
-        tone: "active",
-        badgeText: "Пересдать",
-        badgeVariant: "deadline",
-        badgeIcon: iconAlarm,
-      };
-    case "missed":
-      return {
-        tone: "active",
-        badgeText: "Просрочено",
-        badgeVariant: "deadline",
-        badgeIcon: iconAlarm,
-      };
-    case "new":
-    default:
-      return {
-        tone: "active",
-        badgeText: formatRemainingTime(hw.deadlineAt),
-        badgeVariant: "deadline",
-        badgeIcon: iconAlarm,
-      };
+  // 40 = Проверено
+  if (hw.status === 40) {
+    if (typeof hw.estimate === "number") {
+      return { tone: "score", score: hw.estimate };
+    }
+    return { tone: "checked", badgeText: "Проверено", badgeVariant: "checked" };
   }
+
+  // 30 = На проверке у учителя
+  if (hw.status === 30) {
+    return { tone: "waiting", badgeText: "На проверке", badgeVariant: "waiting", badgeIcon: iconWaiting };
+  }
+
+  // 20 = Проверяет Нейрум
+  if (hw.status === 20) {
+    return { tone: "waiting", badgeText: "Проверяет Нейрум", badgeVariant: "waiting", badgeIcon: iconWaiting };
+  }
+
+  // 25 = Пересдать
+  if (hw.status === 25) {
+    return { tone: "active", badgeText: "Пересдать", badgeVariant: "deadline", badgeIcon: iconAlarm };
+  }
+
+  // 10 = Не сдано (+ проверяем просрочку по дедлайну)
+  if (isOverdue(hw)) {
+    return { tone: "active", badgeText: "Просрочено", badgeVariant: "deadline", badgeIcon: iconAlarm };
+  }
+
+  return { tone: "active", badgeText: formatRemainingTime(hw.deadlineAt), badgeVariant: "deadline", badgeIcon: iconAlarm };
 }
 
 export default function HwCard({ hw, hideSubject = false, onSelect }: HwCardProps) {

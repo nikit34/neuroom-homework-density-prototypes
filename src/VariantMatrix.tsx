@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
+import { HOMEWORK_LIST, SUBJECTS, isOverdue, type HomeworkItem } from "./mockData";
 
 /* ── Variant: Matrix (Subject × Date) ──
    Таблица: строки = предметы, колонки = дни. В ячейках — точки/числа.
@@ -33,12 +33,12 @@ function isToday(d: Date): boolean {
 }
 
 function statusIndicator(hw: HomeworkItem): string {
+  if (isOverdue(hw)) return "mtx-cell--missed";
   switch (hw.status) {
-    case "missed": return "mtx-cell--missed";
-    case "resend": return "mtx-cell--resend";
-    case "done": return "mtx-cell--done";
-    case "checked": return "mtx-cell--checked";
-    case "in_review": return "mtx-cell--review";
+    case 25: return "mtx-cell--resend";
+    case 40: return "mtx-cell--done";
+    case 20: return "mtx-cell--checked";
+    case 30: return "mtx-cell--review";
     default: return "mtx-cell--new";
   }
 }

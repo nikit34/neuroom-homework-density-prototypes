@@ -14,7 +14,7 @@ import VariantMatrix from "./VariantMatrix";
 import VariantQuickWins from "./VariantQuickWins";
 
 const tabs = [
-  { key: "figma", label: "Список+фильтр", path: "/" },
+  { key: "figma", label: "Filter", path: "/" },
   { key: "priority", label: "Priority Inbox", path: "/priority" },
   { key: "timeline-dashboard", label: "Timeline", path: "/timeline" },
 

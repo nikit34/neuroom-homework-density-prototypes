@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
-import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
+import { HOMEWORK_LIST, SUBJECTS, isOverdue, type HomeworkItem } from "./mockData";
 
 /* ── Variant: Kanban ──
    Mobile: snap-scroll, одна колонка на весь экран,
@@ -38,24 +38,24 @@ interface KanbanColumn {
 
 function buildColumns(list: HomeworkItem[]): KanbanColumn[] {
   const buckets: Record<string, HomeworkItem[]> = {
-    active: [], review: [], checked: [], resend: [], done: [],
+    active: [], neuroom: [], resend: [], teacher: [], done: [],
   };
 
   for (const hw of list) {
     switch (hw.status) {
-      case "new": case "missed": buckets.active.push(hw); break;
-      case "in_review": buckets.review.push(hw); break;
-      case "checked": buckets.checked.push(hw); break;
-      case "resend": buckets.resend.push(hw); break;
-      case "done": buckets.done.push(hw); break;
+      case 10: buckets.active.push(hw); break;
+      case 20: buckets.neuroom.push(hw); break;
+      case 25: buckets.resend.push(hw); break;
+      case 30: buckets.teacher.push(hw); break;
+      case 40: buckets.done.push(hw); break;
     }
   }
 
   return [
     { key: "active", title: "Активные", accentColor: "#7455ff", items: buckets.active },
-    { key: "review", title: "На проверке", accentColor: "#f5a623", items: buckets.review },
-    { key: "checked", title: "Проверено", accentColor: "#07be7e", items: buckets.checked },
+    { key: "neuroom", title: "Проверяет Нейрум", accentColor: "#f5a623", items: buckets.neuroom },
     { key: "resend", title: "Пересдать", accentColor: "#d45757", items: buckets.resend },
+    { key: "teacher", title: "На проверке у учителя", accentColor: "#f5a623", items: buckets.teacher },
     { key: "done", title: "Сдано", accentColor: "#07be7e", items: buckets.done },
   ].filter((col) => col.items.length > 0);
 }
@@ -129,7 +129,7 @@ export default function VariantKanban({ selectedSubjectId = null, onSelect }: Va
                     <span className="kanban-card__subject">{hw.subject}</span>
                     <span className="kanban-card__desc">{hw.description}</span>
                     <span className="kanban-card__deadline">до {formatDeadlineShort(hw.deadlineAt)}</span>
-                    {hw.status === "done" && hw.estimate && (
+                    {hw.status === 40 && hw.estimate && (
                       <span className="kanban-card__grade">{hw.estimate}</span>
                     )}
                   </div>

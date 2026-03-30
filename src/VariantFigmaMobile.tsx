@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { HOMEWORK_LIST, type HomeworkItem } from "./mockData";
+import { HOMEWORK_LIST, isOverdue, type HomeworkItem } from "./mockData";
 import HwCard from "./HwCard";
 
 interface VariantFigmaMobileProps {
@@ -12,7 +12,7 @@ function byDeadlineAscending(a: HomeworkItem, b: HomeworkItem): number {
 }
 
 function isActiveHomework(hw: HomeworkItem): boolean {
-  return hw.status === "new" || hw.status === "missed" || hw.status === "resend";
+  return hw.status === 10 || hw.status === 25;
 }
 
 export default function VariantFigmaMobile({

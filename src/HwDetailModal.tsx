@@ -1,4 +1,4 @@
-import { SUBJECTS, type HomeworkItem } from "./mockData";
+import { SUBJECTS, isOverdue, type HomeworkItem } from "./mockData";
 import iconCalendar from "./assets/icon-calendar.svg";
 import iconAttach from "./assets/icon-attach.svg";
 import iconChat from "./assets/icon-chat.svg";
@@ -20,19 +20,19 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function statusLabel(status: HomeworkItem["status"]): { text: string; cls: string } {
-  switch (status) {
-    case "missed": return { text: "Просрочено", cls: "detail-status--missed" };
-    case "resend": return { text: "Пересдать", cls: "detail-status--resend" };
-    case "checked": return { text: "Проверено Нейрумом", cls: "detail-status--checked" };
-    case "in_review": return { text: "На проверке", cls: "detail-status--review" };
-    case "done": return { text: "Сдано", cls: "detail-status--done" };
+function statusLabel(hw: HomeworkItem): { text: string; cls: string } {
+  if (isOverdue(hw)) return { text: "Просрочено", cls: "detail-status--missed" };
+  switch (hw.status) {
+    case 25: return { text: "Пересдать", cls: "detail-status--resend" };
+    case 20: return { text: "Проверяет Нейрум", cls: "detail-status--checked" };
+    case 30: return { text: "На проверке у учителя", cls: "detail-status--review" };
+    case 40: return { text: "Сдано", cls: "detail-status--done" };
     default: return { text: "Новое", cls: "detail-status--new" };
   }
 }
 
 export default function HwDetailModal({ hw, onClose }: HwDetailModalProps) {
-  const status = statusLabel(hw.status);
+  const status = statusLabel(hw);
   const color = subjectColor(hw.subjectId);
 
   return (
@@ -74,7 +74,7 @@ export default function HwDetailModal({ hw, onClose }: HwDetailModalProps) {
         </div>
 
         {/* Grade */}
-        {hw.status === "done" && hw.estimate && (
+        {hw.status === 40 && hw.estimate && (
           <div className="detail-grade">
             <span className="detail-grade__label">Оценка</span>
             <span className="detail-grade__value">{hw.estimate}</span>
@@ -83,7 +83,7 @@ export default function HwDetailModal({ hw, onClose }: HwDetailModalProps) {
 
         {/* Actions */}
         <div className="detail-actions">
-          {hw.status !== "done" && hw.status !== "in_review" && hw.status !== "checked" && (
+          {hw.status !== 40 && hw.status !== 20 && hw.status !== 30 && (
             <button className="detail-btn detail-btn--primary" type="button">Сдать задание</button>
           )}
           <div className="detail-actions__row">

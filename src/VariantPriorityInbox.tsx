@@ -1,16 +1,16 @@
 import { useState, useMemo } from "react";
-import { HOMEWORK_LIST, type HomeworkItem } from "./mockData";
+import { HOMEWORK_LIST, isOverdue, type HomeworkItem } from "./mockData";
 import HwCard from "./HwCard";
 
 /* ── Variant: Priority Inbox (с collapse) ──
-   Секции по срочности + каждая секция сворачивается.
-   "Позже" и "Сданные" свёрнуты по умолчанию.
+   Статусы: 10=не сдано, 20=проверяет Нейрум, 25=пересдать, 30=на проверке, 40=проверено
+   Просрочено = status 10 + deadline в прошлом
 */
 
 interface PriorityGroup {
   key: string;
   title: string;
-  variant: "overdue" | "urgent" | "resend" | "checked" | "review" | "week" | "later" | "done";
+  variant: "overdue" | "urgent" | "resend" | "neuroom" | "review" | "week" | "later" | "done";
   items: HomeworkItem[];
 }
 
@@ -24,25 +24,27 @@ function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
 
   const overdue: HomeworkItem[] = [];
   const todayTomorrow: HomeworkItem[] = [];
-  const resend: HomeworkItem[] = [];
-  const checked: HomeworkItem[] = [];
-  const inReview: HomeworkItem[] = [];
+  const resend: HomeworkItem[] = [];     // 25
+  const neuroom: HomeworkItem[] = [];    // 20
+  const inReview: HomeworkItem[] = [];   // 30
   const thisWeek: HomeworkItem[] = [];
   const later: HomeworkItem[] = [];
-  const done: HomeworkItem[] = [];
+  const done: HomeworkItem[] = [];       // 40
 
   for (const hw of list) {
-    if (hw.status === "done") { done.push(hw); continue; }
-    if (hw.status === "resend") { resend.push(hw); continue; }
-    if (hw.status === "checked") { checked.push(hw); continue; }
-    if (hw.status === "in_review") { inReview.push(hw); continue; }
+    if (hw.status === 40) { done.push(hw); continue; }
+    if (hw.status === 25) { resend.push(hw); continue; }
+    if (hw.status === 20) { neuroom.push(hw); continue; }
+    if (hw.status === 30) { inReview.push(hw); continue; }
+
+    // status 10 — не сдано
+    if (isOverdue(hw)) { overdue.push(hw); continue; }
 
     const deadline = new Date(hw.deadlineAt);
     const target = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
     const diff = Math.floor((target.getTime() - today.getTime()) / 86400000);
 
-    if (diff < 0) overdue.push(hw);
-    else if (diff <= 1) todayTomorrow.push(hw);
+    if (diff <= 1) todayTomorrow.push(hw);
     else if (diff <= 7) thisWeek.push(hw);
     else later.push(hw);
   }
@@ -50,12 +52,12 @@ function classifyIntoGroups(list: HomeworkItem[]): PriorityGroup[] {
   const groups: PriorityGroup[] = [];
   if (overdue.length) groups.push({ key: "overdue", title: "Просрочено", variant: "overdue", items: overdue });
   if (todayTomorrow.length) groups.push({ key: "urgent", title: "Сдать сегодня / завтра", variant: "urgent", items: todayTomorrow });
-  if (resend.length) groups.push({ key: "resend", title: "Требует пересдачи", variant: "resend", items: resend });
-  if (checked.length) groups.push({ key: "checked", title: "Проверено Нейрумом", variant: "checked", items: checked });
-  if (inReview.length) groups.push({ key: "review", title: "На проверке", variant: "review", items: inReview });
+  if (resend.length) groups.push({ key: "resend", title: "Пересдать", variant: "resend", items: resend });
+  if (neuroom.length) groups.push({ key: "neuroom", title: "Проверяет Нейрум", variant: "neuroom", items: neuroom });
+  if (inReview.length) groups.push({ key: "review", title: "На проверке у учителя", variant: "review", items: inReview });
   if (thisWeek.length) groups.push({ key: "week", title: "На этой неделе", variant: "week", items: thisWeek });
   if (later.length) groups.push({ key: "later", title: "Позже", variant: "later", items: later });
-  if (done.length) groups.push({ key: "done", title: "Сданные", variant: "done", items: done });
+  if (done.length) groups.push({ key: "done", title: "Проверено", variant: "done", items: done });
   return groups;
 }
 
@@ -65,7 +67,6 @@ export default function VariantPriorityInbox({
   onSelect,
 }: VariantPriorityInboxProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(DEFAULT_COLLAPSED);
-
   const groups = useMemo(() => classifyIntoGroups(HOMEWORK_LIST), []);
 
   const toggleCollapse = (key: string) =>
@@ -74,13 +75,13 @@ export default function VariantPriorityInbox({
   return (
     <div className="variant">
       {groups.length === 0 && (
-        <div className="empty-state">Нет заданий по выбранному предмету</div>
+        <div className="empty-state">Нет заданий</div>
       )}
 
       {groups.map((group) => {
         const isCollapsed = !!collapsed[group.key];
         const alertCount = group.items.filter(
-          (h) => h.status === "missed" || h.status === "resend"
+          (h) => isOverdue(h) || h.status === 25
         ).length;
 
         return (
