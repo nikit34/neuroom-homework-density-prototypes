@@ -14,7 +14,7 @@ import VariantProgressTracker from "./VariantProgressTracker";
 import VariantQuickWins from "./VariantQuickWins";
 
 const tabs = [
-  { key: "figma", label: "Простой список", path: "/" },
+  { key: "figma", label: "Список+фильтр", path: "/" },
   { key: "priority", label: "Priority Inbox", path: "/priority" },
   { key: "timeline-dashboard", label: "Timeline+Dash", path: "/timeline" },
   { key: "calendar", label: "Calendar Week", path: "/calendar" },
