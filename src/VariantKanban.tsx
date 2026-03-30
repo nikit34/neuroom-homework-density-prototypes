@@ -1,9 +1,10 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { HOMEWORK_LIST, SUBJECTS, type HomeworkItem } from "./mockData";
 
 /* ── Variant: Kanban ──
-   Горизонтальные колонки по статусу: Новое → На проверке → Проверено → Пересдать → Сдано.
-   Свайп по горизонтали. Каждая колонка — вертикальный список мини-карточек.
+   Mobile: snap-scroll, одна колонка на весь экран,
+   плавное перелистывание, видно края соседних колонок,
+   точки-индикаторы + заголовки соседних колонок.
 */
 
 interface VariantKanbanProps {
@@ -61,6 +62,7 @@ function buildColumns(list: HomeworkItem[]): KanbanColumn[] {
 
 export default function VariantKanban({ selectedSubjectId = null, onSelect }: VariantKanbanProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const homework = useMemo(() => {
     if (selectedSubjectId === null) return HOMEWORK_LIST;
@@ -69,17 +71,57 @@ export default function VariantKanban({ selectedSubjectId = null, onSelect }: Va
 
   const columns = useMemo(() => buildColumns(homework), [homework]);
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollLeft = el.scrollLeft;
+    const colWidth = el.offsetWidth;
+    const index = Math.round(scrollLeft / colWidth);
+    setActiveIndex(Math.min(index, columns.length - 1));
+  }, [columns.length]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  const scrollTo = (index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: index * el.offsetWidth, behavior: "smooth" });
+  };
+
   return (
-    <div className="variant">
-      <div className="kanban-scroll" ref={scrollRef}>
+    <div className="variant kanban-variant">
+      {/* Neighbour hints */}
+      <div className="kanban-nav">
+        {columns.map((col, i) => (
+          <button
+            key={col.key}
+            className={`kanban-nav__item ${i === activeIndex ? "kanban-nav__item--active" : ""}`}
+            style={i === activeIndex ? { borderColor: col.accentColor, color: col.accentColor } : {}}
+            onClick={() => scrollTo(i)}
+            type="button"
+          >
+            <span className="kanban-nav__dot" style={{ background: col.accentColor }} />
+            <span className="kanban-nav__label">{col.title}</span>
+            <span className="kanban-nav__count">{col.items.length}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Snap-scroll columns */}
+      <div className="kanban-snap" ref={scrollRef}>
         {columns.map((col) => (
-          <div key={col.key} className="kanban-col">
-            <div className="kanban-col__header">
-              <span className="kanban-col__dot" style={{ background: col.accentColor }} />
-              <span className="kanban-col__title">{col.title}</span>
-              <span className="kanban-col__count">{col.items.length}</span>
+          <div key={col.key} className="kanban-page">
+            <div className="kanban-page__header">
+              <span className="kanban-page__dot" style={{ background: col.accentColor }} />
+              <span className="kanban-page__title">{col.title}</span>
+              <span className="kanban-page__count">{col.items.length}</span>
             </div>
-            <div className="kanban-col__list">
+            <div className="kanban-page__list">
               {col.items.map((hw) => (
                 <div key={hw.id} className="kanban-card" onClick={() => onSelect?.(hw)} style={{ cursor: "pointer" }}>
                   <div className="kanban-card__bar" style={{ background: subjectColor(hw.subjectId) }} />
@@ -95,6 +137,20 @@ export default function VariantKanban({ selectedSubjectId = null, onSelect }: Va
               ))}
             </div>
           </div>
+        ))}
+      </div>
+
+      {/* Dot indicators */}
+      <div className="kanban-dots">
+        {columns.map((col, i) => (
+          <button
+            key={col.key}
+            className={`kanban-dots__dot ${i === activeIndex ? "kanban-dots__dot--active" : ""}`}
+            style={i === activeIndex ? { background: col.accentColor } : {}}
+            onClick={() => scrollTo(i)}
+            type="button"
+            aria-label={col.title}
+          />
         ))}
       </div>
     </div>

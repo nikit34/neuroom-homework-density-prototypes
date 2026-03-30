@@ -43,7 +43,7 @@ function App() {
   const [selectedHw, setSelectedHw] = useState<HomeworkItem | null>(null);
 
   const path = location.pathname;
-  const hideFilter = path === "/priority" || path === "/timeline" || activeTab === "priority" || activeTab === "timeline-dashboard";
+  const hideFilter = path === "/priority" || path === "/timeline" || path === "/kanban" || path === "/matrix" || activeTab === "priority" || activeTab === "timeline-dashboard" || activeTab === "kanban" || activeTab === "matrix";
 
   return (
     <div className="proto-shell">
@@ -100,8 +100,8 @@ function App() {
             <Route path="/priority" element={<VariantPriorityInbox onSelect={setSelectedHw} />} />
             <Route path="/timeline" element={<VariantTimelineDashboard onSelect={setSelectedHw} />} />
 
-            <Route path="/kanban" element={<VariantKanban selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
-            <Route path="/matrix" element={<VariantMatrix selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
+            <Route path="/kanban" element={<VariantKanban onSelect={setSelectedHw} />} />
+            <Route path="/matrix" element={<VariantMatrix onSelect={setSelectedHw} />} />
             <Route path="/progress" element={<VariantProgressTracker selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
             <Route path="/quick-wins" element={<VariantQuickWins selectedSubjectId={selectedSubjectId} onSelect={setSelectedHw} />} />
           </Routes>
