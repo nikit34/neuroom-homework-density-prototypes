@@ -104,11 +104,13 @@ export default function VariantCalendarWeek({ selectedSubjectId = null, onSelect
           const today = isToday(day);
           const isFuture = day > new Date(new Date().setHours(23, 59, 59, 999));
 
-          // Скрываем дни без активных заданий после сегодня
-          // (пустые, или все ДЗ уже проверены/на проверке/с оценкой)
+          const isPast = !today && !isFuture;
           const hasActionable = items.some((hw) => hw.status === 10 || hw.status === 25);
-          if (isFuture && !hasActionable) return null;
-          if (!today && !isFuture && items.length > 0 && !hasActionable) return null;
+
+          // Прошлые дни: скрываем если пусто или нет активных (всё сдано/проверено)
+          if (isPast && !hasActionable) return null;
+          // Будущие пустые — скрываем
+          if (isFuture && items.length === 0) return null;
 
           const weekday = day.toLocaleDateString("ru-RU", { weekday: "long" });
           const dayNum = day.getDate();
