@@ -364,56 +364,63 @@ function buildPoolElim(pool, prefix) {
 // ══════════════════════════════════════
 // BRACKET BUILDERS
 // ══════════════════════════════════════
-function slot(v, cls) {
-  const icons = {'win':'&#10004;','lose':'&#10008;','auto':'&#9889;','both':'&#10004;&#10004;'};
-  return `<div class="bracket-slot bracket-slot--${cls}"><span class="bracket-slot-icon">${icons[cls]||''}</span><span class="bracket-slot-name">${v.label}</span></div>`;
-}
-
-function qfPairHtml(qId, varA, varB) {
-  const a = answers[qId];
-  const ci = a ? a.choiceIndex : undefined;
-  if (ci === 2) return `<div class="bracket-pair">${slot(varA,'win')}${slot(varB,'win')}</div><div style="text-align:center;font-size:10px;color:var(--success);font-weight:600">&#127881; Оба прошли!</div>`;
-  if (ci === 3) return `<div class="bracket-pair">${slot(varA,'lose')}${slot(varB,'lose')}</div><div style="text-align:center;font-size:10px;color:#ef4444;font-weight:600">&#128128; Оба выбыли</div>`;
-  const w = ci === 1 ? varB : varA, l = ci === 1 ? varA : varB;
-  return `<div class="bracket-pair">${slot(w,'win')}${slot(l,'lose')}</div>`;
-}
-
-function qfPairColumnHtml(qId, varA, varB) {
-  const a = answers[qId];
-  const ci = a ? a.choiceIndex : undefined;
-  if (ci === 2) return `<div class="semi-bracket__pair">${slot(varA,'win')}${slot(varB,'win')}</div>`;
-  if (ci === 3) return `<div class="semi-bracket__pair">${slot(varA,'lose')}${slot(varB,'lose')}</div>`;
-  const w = ci === 1 ? varB : varA, l = ci === 1 ? varA : varB;
-  return `<div class="semi-bracket__pair">${slot(w,'win')}${slot(l,'lose')}</div>`;
-}
-
-function autoPairColumnHtml(v) {
-  return `<div class="semi-bracket__pair">${slot(v,'auto')}<div class="bracket-slot bracket-slot--ghost"><span class="bracket-slot-icon"></span><span class="bracket-slot-name" style="text-align:center;color:var(--text-dim)">авто</span></div></div>`;
-}
-
-function semiMatchCardHtml(pool, label) {
-  let cls = '';
-  let text = '';
-  if (pool.length === 0) {
-    cls = ' semi-bracket__match--empty';
-    text = 'Нет участников';
-  } else if (pool.length === 1) {
-    cls = ' semi-bracket__match--auto';
-    text = `${pool[0].label} — без боя`;
-  } else if (pool.length === 2) {
-    text = `${pool[0].label} vs ${pool[1].label}`;
-  } else {
-    text = `${pool.map((v) => v.label).join(' • ')}`;
+function buildPoolTrace(pool, prefix) {
+  if (pool.length <= 1) return { pool, matches: [], lastMatch: null, winner: pool[0] || null };
+  const matches = [];
+  let rem = [...pool], mn = 1;
+  while (rem.length > 1) {
+    const a = rem[0], b = rem[1], qId = `${prefix}_m${mn}_q1`;
+    const winner = getMatchWinner(qId, a, b);
+    const loser = winner === a ? b : a;
+    matches.push({ a, b, winner, loser, qId });
+    rem = [winner, ...rem.slice(2)];
+    mn++;
   }
-
-  return `<div class="semi-bracket__match${cls}"><div class="semi-bracket__match-label">${label}</div><div class="semi-bracket__match-text">${text}</div></div>`;
+  return { pool, matches, lastMatch: matches[matches.length - 1] || null, winner: rem[0] || null };
 }
 
-function poolLabel(pool) {
-  if (pool.length === 0) return '<div style="text-align:center;font-size:11px;color:#ef4444;font-weight:600">&#128128; Нет участников — соперник без боя</div>';
-  if (pool.length === 1) return `<div class="bracket-next">&#9889; ${pool[0].label} проходит без боя</div>`;
-  if (pool.length === 2) return `<div class="bracket-next">&#9876;&#65039; ${pool[0].label} <span class="bracket-vs-label">vs</span> ${pool[1].label}</div>`;
-  return `<div class="bracket-next">&#9876;&#65039; ${pool.map(v=>v.label).join(' → ')} (серия матчей)</div>`;
+function bracketCellHtml(label, cls) {
+  return `<div class="bracket-cell bracket-cell--${cls}">${label}</div>`;
+}
+
+function bracketPairHtml(items) {
+  return `<div class="tourney-overview__pair">${items.map((item) => bracketCellHtml(item.label, item.cls)).join('')}</div>`;
+}
+
+function qfPairItems(qId, varA, varB) {
+  const ci = answers[qId] ? answers[qId].choiceIndex : undefined;
+  if (ci === 2) return [{ label: varA.label, cls: 'win' }, { label: varB.label, cls: 'win' }];
+  if (ci === 3) return [{ label: varA.label, cls: 'lose' }, { label: varB.label, cls: 'lose' }];
+  const winner = ci === 1 ? varB : varA;
+  const loser = ci === 1 ? varA : varB;
+  return [{ label: winner.label, cls: 'win' }, { label: loser.label, cls: 'lose' }];
+}
+
+function autoPairItems(v) {
+  return [{ label: v.label, cls: 'auto' }, { label: 'авто', cls: 'ghost' }];
+}
+
+function tracePairItems(trace) {
+  if (!trace.winner) return [{ label: 'Нет финалиста', cls: 'empty' }];
+  if (!trace.lastMatch) return [{ label: trace.winner.label, cls: 'auto' }, { label: 'без боя', cls: 'ghost' }];
+  return [
+    { label: trace.lastMatch.winner.label, cls: 'win' },
+    { label: trace.lastMatch.loser.label, cls: 'lose' },
+  ];
+}
+
+function stageCardHtml(pool) {
+  if (pool.length === 0) return bracketCellHtml('Нет участников', 'empty');
+  if (pool.length === 1) return bracketCellHtml(`${pool[0].label} — без боя`, 'auto');
+  if (pool.length === 2) return bracketCellHtml(`${pool[0].label} vs ${pool[1].label}`, 'stage');
+  return bracketCellHtml(pool.map((v) => v.label).join(' • '), 'stage');
+}
+
+function finalCardHtml(finalists, champion) {
+  if (champion) return bracketCellHtml(champion.label, 'champ');
+  if (finalists.length === 0) return bracketCellHtml('Нет финалистов', 'empty');
+  if (finalists.length === 1) return bracketCellHtml(`${finalists[0].label} — без боя`, 'auto');
+  return bracketCellHtml(`${finalists[0].label} vs ${finalists[1].label}`, 'next');
 }
 
 function buildSemiBracketHtml() {
@@ -422,30 +429,26 @@ function buildSemiBracketHtml() {
   return `
   <div class="bracket-tree">
     <div class="bracket-stage-label">&#127942; Турнирная сетка</div>
-    <div class="semi-bracket">
-      <div class="semi-bracket__head">
-        <div class="semi-bracket__head-col">ЧФ</div>
+    <div class="tourney-overview">
+      <div class="tourney-overview__head tourney-overview__head--two">
+        <div class="tourney-overview__head-col">ЧФ</div>
         <div></div>
-        <div class="semi-bracket__head-col">ПФ</div>
+        <div class="tourney-overview__head-col">ПФ</div>
       </div>
-      <div class="semi-bracket__row">
-        <div class="semi-bracket__qf">
-          ${qfPairColumnHtml('r1_q1',V.filter,V.kanban)}
-          ${qfPairColumnHtml('r2_q1',V.priority,V.calendar)}
+      <div class="tourney-overview__body tourney-overview__body--two">
+        <div class="tourney-overview__col">
+          ${bracketPairHtml(qfPairItems('r1_q1',V.filter,V.kanban))}
+          ${bracketPairHtml(qfPairItems('r2_q1',V.priority,V.calendar))}
+          ${bracketPairHtml(qfPairItems('r3_q1',V.timeline,V.matrix))}
+          ${bracketPairHtml(autoPairItems(V.quickwins))}
         </div>
-        <div class="semi-bracket__connector"></div>
-        <div class="semi-bracket__next">
-          ${semiMatchCardHtml(pool1, 'ПФ1')}
+        <div class="tourney-overview__lines">
+          <div class="tourney-overview__line"></div>
+          <div class="tourney-overview__line"></div>
         </div>
-      </div>
-      <div class="semi-bracket__row">
-        <div class="semi-bracket__qf">
-          ${qfPairColumnHtml('r3_q1',V.timeline,V.matrix)}
-          ${autoPairColumnHtml(V.quickwins)}
-        </div>
-        <div class="semi-bracket__connector"></div>
-        <div class="semi-bracket__next">
-          ${semiMatchCardHtml(pool2, 'ПФ2')}
+        <div class="tourney-overview__col">
+          <div class="tourney-overview__final">${stageCardHtml(pool1)}</div>
+          <div class="tourney-overview__final">${stageCardHtml(pool2)}</div>
         </div>
       </div>
     </div>
@@ -455,33 +458,42 @@ function buildSemiBracketHtml() {
 function buildFinalBracketHtml() {
   const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban), ...getAdvancers('r2_q1',V.priority,V.calendar)];
   const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix), V.quickwins];
-  const sf1 = buildPoolElim(pool1, 's1');
-  const sf2 = buildPoolElim(pool2, 's2');
+  const sf1 = buildPoolTrace(pool1, 's1');
+  const sf2 = buildPoolTrace(pool2, 's2');
   const finalists = [sf1.winner, sf2.winner].filter(Boolean);
-  const cell = (v,cls) => v ? `<div class="bracket-cell bracket-cell--${cls}">${v.label}</div>` : '';
-  const f1 = sf1.winner, f2 = sf2.winner;
-  let finalText = '';
-  if (finalists.length >= 2) finalText = `&#9876;&#65039; ${f1.label} vs ${f2.label}`;
-  else if (finalists.length === 1) finalText = `&#127942; ${finalists[0].label} — без боя!`;
-  else finalText = '&#128128; Нет финалистов';
   return `
   <div class="bracket-tree">
-    <div class="bracket-stage-label">&#127942; Путь к финалу</div>
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;gap:6px;align-items:center">
-        <div style="font-size:10px;color:var(--text-dim);width:24px;flex-shrink:0">ПФ1</div>
-        <div style="flex:1">${pool1.map((v,i) => cell(v, v===sf1.winner?'win':'lose')).join('')}</div>
-        <div style="font-size:12px">&#8594;</div>
-        <div>${sf1.winner ? cell(sf1.winner,'win') : '<span style="font-size:10px;color:#ef4444">—</span>'}</div>
+    <div class="bracket-stage-label">&#127942; Турнирная сетка</div>
+    <div class="tourney-overview">
+      <div class="tourney-overview__head tourney-overview__head--three">
+        <div class="tourney-overview__head-col">ЧФ</div>
+        <div></div>
+        <div class="tourney-overview__head-col">ПФ</div>
+        <div></div>
+        <div class="tourney-overview__head-col">&#127942;</div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <div style="font-size:10px;color:var(--text-dim);width:24px;flex-shrink:0">ПФ2</div>
-        <div style="flex:1">${pool2.map((v,i) => cell(v, v===sf2.winner?'win':'lose')).join('')}</div>
-        <div style="font-size:12px">&#8594;</div>
-        <div>${sf2.winner ? cell(sf2.winner,'win') : '<span style="font-size:10px;color:#ef4444">—</span>'}</div>
+      <div class="tourney-overview__body tourney-overview__body--three">
+        <div class="tourney-overview__col">
+          ${bracketPairHtml(qfPairItems('r1_q1',V.filter,V.kanban))}
+          ${bracketPairHtml(qfPairItems('r2_q1',V.priority,V.calendar))}
+          ${bracketPairHtml(qfPairItems('r3_q1',V.timeline,V.matrix))}
+          ${bracketPairHtml(autoPairItems(V.quickwins))}
+        </div>
+        <div class="tourney-overview__lines">
+          <div class="tourney-overview__line"></div>
+          <div class="tourney-overview__line"></div>
+        </div>
+        <div class="tourney-overview__col">
+          ${bracketPairHtml(tracePairItems(sf1))}
+          ${bracketPairHtml(tracePairItems(sf2))}
+        </div>
+        <div class="tourney-overview__lines tourney-overview__lines--single">
+          <div class="tourney-overview__line"></div>
+        </div>
+        <div class="tourney-overview__final">
+          ${finalCardHtml(finalists, null)}
+        </div>
       </div>
-      <div style="text-align:center;padding:6px 0">&#11015;</div>
-      <div class="bracket-cell bracket-cell--champ" style="text-align:center">${finalText}</div>
     </div>
   </div>`;
 }
@@ -489,35 +501,41 @@ function buildFinalBracketHtml() {
 function buildFullTreeHtml(champion) {
   const pool1 = [...getAdvancers('r1_q1',V.filter,V.kanban), ...getAdvancers('r2_q1',V.priority,V.calendar)];
   const pool2 = [...getAdvancers('r3_q1',V.timeline,V.matrix), V.quickwins];
-  const sf1 = buildPoolElim(pool1,'s1'), sf2 = buildPoolElim(pool2,'s2');
-  const cell = (v,cls) => `<div class="bracket-cell bracket-cell--${cls}" style="font-size:9px;padding:4px 6px;min-height:22px">${v.label}</div>`;
-  const allQF = [V.filter,V.kanban,V.priority,V.calendar,V.timeline,V.matrix,V.quickwins];
-  const advPool1 = new Set(pool1.map(v=>v.key)), advPool2 = new Set(pool2.map(v=>v.key));
-  const advSF = new Set([sf1.winner,sf2.winner].filter(Boolean).map(v=>v.key));
-  const champKey = champion ? champion.key : null;
-  function qfCell(v) {
-    const adv = advPool1.has(v.key)||advPool2.has(v.key);
-    return cell(v, adv ? (advSF.has(v.key) ? (v.key===champKey?'champ':'win') : 'win') : 'lose');
-  }
-  function sfCell(v) { return v ? cell(v, v.key===champKey?'champ':'win') : ''; }
+  const sf1 = buildPoolTrace(pool1,'s1');
+  const sf2 = buildPoolTrace(pool2,'s2');
+  const finalists = [sf1.winner, sf2.winner].filter(Boolean);
   return `
   <div class="bracket-tree">
-    <div class="bracket-stage-label">&#127942; Полная турнирная сетка</div>
-    <div style="display:flex;flex-direction:column;gap:4px;font-size:10px">
-      <div style="display:flex;gap:4px;align-items:center;color:var(--text-dim);font-size:9px;font-weight:600"><div style="flex:2">ЧФ</div><div style="width:12px"></div><div style="flex:1">ПФ</div><div style="width:12px"></div><div style="flex:1">&#127942;</div></div>
-      <div style="display:flex;gap:4px;align-items:stretch">
-        <div style="flex:2;display:flex;flex-direction:column;gap:2px">${[V.filter,V.kanban,V.priority,V.calendar].map(v=>qfCell(v)).join('')}</div>
-        <div style="width:12px;display:flex;align-items:center;color:var(--text-dim)">&#8594;</div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px">${pool1.filter(v=>advSF.has(v.key)).map(v=>sfCell(v)).join('')||'<div style="color:#ef4444;font-size:9px">—</div>'}</div>
-        <div style="width:12px;display:flex;align-items:center;color:var(--text-dim)">&#8594;</div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center">${champion?cell(champion,'champ'):'<div style="color:#ef4444;font-size:9px">—</div>'}</div>
+    <div class="bracket-stage-label">&#127942; Турнирная сетка</div>
+    <div class="tourney-overview">
+      <div class="tourney-overview__head tourney-overview__head--three">
+        <div class="tourney-overview__head-col">ЧФ</div>
+        <div></div>
+        <div class="tourney-overview__head-col">ПФ</div>
+        <div></div>
+        <div class="tourney-overview__head-col">&#127942;</div>
       </div>
-      <div style="display:flex;gap:4px;align-items:stretch;margin-top:2px">
-        <div style="flex:2;display:flex;flex-direction:column;gap:2px">${[V.timeline,V.matrix,V.quickwins].map(v=>qfCell(v)).join('')}</div>
-        <div style="width:12px;display:flex;align-items:center;color:var(--text-dim)">&#8594;</div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px">${pool2.filter(v=>advSF.has(v.key)).map(v=>sfCell(v)).join('')||'<div style="color:#ef4444;font-size:9px">—</div>'}</div>
-        <div style="width:12px"></div>
-        <div style="flex:1"></div>
+      <div class="tourney-overview__body tourney-overview__body--three">
+        <div class="tourney-overview__col">
+          ${bracketPairHtml(qfPairItems('r1_q1',V.filter,V.kanban))}
+          ${bracketPairHtml(qfPairItems('r2_q1',V.priority,V.calendar))}
+          ${bracketPairHtml(qfPairItems('r3_q1',V.timeline,V.matrix))}
+          ${bracketPairHtml(autoPairItems(V.quickwins))}
+        </div>
+        <div class="tourney-overview__lines">
+          <div class="tourney-overview__line"></div>
+          <div class="tourney-overview__line"></div>
+        </div>
+        <div class="tourney-overview__col">
+          ${bracketPairHtml(tracePairItems(sf1))}
+          ${bracketPairHtml(tracePairItems(sf2))}
+        </div>
+        <div class="tourney-overview__lines tourney-overview__lines--single">
+          <div class="tourney-overview__line"></div>
+        </div>
+        <div class="tourney-overview__final">
+          ${finalCardHtml(finalists, champion)}
+        </div>
       </div>
     </div>
   </div>`;
@@ -822,9 +840,6 @@ function render() {
 // ══════════════════════════════════════
 // HANDLERS
 // ══════════════════════════════════════
-function logAnswer(id, value) {
-  logEvent('answer', id + ': ' + value);
-}
 function onInput(id) {
   if (!answers[id]) answers[id] = {};
   answers[id].value = document.getElementById('input-'+id).value;
@@ -836,7 +851,6 @@ function onChoice(id, i) {
   if (!answers[id]) answers[id] = {};
   answers[id].choiceIndex = i;
   answers[id].value = s.choices[i];
-  logAnswer(id, s.choices[i]);
   render();
 }
 function onMulti(id, i) {
@@ -883,10 +897,6 @@ function goNext() {
   const screens = buildScreens();
   const s = screens[current];
   if (!isAnswered(s)) return;
-  // Log textarea/multiselect answers on leaving the screen
-  if ((s.type === 'textarea' || s.type === 'multiselect') && answers[s.id] && answers[s.id].value) {
-    logAnswer(s.id, answers[s.id].value);
-  }
   if (current === screens.length - 2) { submitAnswers(); return; }
   current++;
   shouldAnimate = true;
