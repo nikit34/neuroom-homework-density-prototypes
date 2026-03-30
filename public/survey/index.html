@@ -287,12 +287,12 @@ function slot(v, cls) {
 }
 
 function buildSemiBracketHtml() {
-  const w1 = getWinner('r1_q1', V.filter, V.priority);
-  const l1 = getLoser('r1_q1', V.filter, V.priority);
-  const w2 = getWinner('r2_q1', V.timeline, V.calendar);
-  const l2 = getLoser('r2_q1', V.timeline, V.calendar);
-  const w3 = getWinner('r3_q1', V.kanban, V.matrix);
-  const l3 = getLoser('r3_q1', V.kanban, V.matrix);
+  const w1 = getWinner('r1_q1', V.filter, V.kanban);
+  const l1 = getLoser('r1_q1', V.filter, V.kanban);
+  const w2 = getWinner('r2_q1', V.priority, V.calendar);
+  const l2 = getLoser('r2_q1', V.priority, V.calendar);
+  const w3 = getWinner('r3_q1', V.timeline, V.matrix);
+  const l3 = getLoser('r3_q1', V.timeline, V.matrix);
 
   return `
   <div class="bracket-tree">
@@ -320,12 +320,12 @@ function buildSemiBracketHtml() {
 
 function buildFinalBracketHtml() {
   // QF results
-  const w1 = getWinner('r1_q1', V.filter, V.priority);
-  const l1 = getLoser('r1_q1', V.filter, V.priority);
-  const w2 = getWinner('r2_q1', V.timeline, V.calendar);
-  const l2 = getLoser('r2_q1', V.timeline, V.calendar);
-  const w3 = getWinner('r3_q1', V.kanban, V.matrix);
-  const l3 = getLoser('r3_q1', V.kanban, V.matrix);
+  const w1 = getWinner('r1_q1', V.filter, V.kanban);
+  const l1 = getLoser('r1_q1', V.filter, V.kanban);
+  const w2 = getWinner('r2_q1', V.priority, V.calendar);
+  const l2 = getLoser('r2_q1', V.priority, V.calendar);
+  const w3 = getWinner('r3_q1', V.timeline, V.matrix);
+  const l3 = getLoser('r3_q1', V.timeline, V.matrix);
   // SF results
   const sf1w = getWinner('s1_q1', w1, w2);
   const sf1l = getLoser('s1_q1', w1, w2);
@@ -416,9 +416,9 @@ function enableIframeUnlock() {
 // ══════════════════════════════════════
 function buildScreens() {
   // Quarter-final winners
-  const w1 = getWinner('r1_q1', V.filter, V.priority);
-  const w2 = getWinner('r2_q1', V.timeline, V.calendar);
-  const w3 = getWinner('r3_q1', V.kanban, V.matrix);
+  const w1 = getWinner('r1_q1', V.filter, V.kanban);
+  const w2 = getWinner('r2_q1', V.priority, V.calendar);
+  const w3 = getWinner('r3_q1', V.timeline, V.matrix);
   const w4 = V.quickwins;
 
   // Semi-final winners
@@ -429,23 +429,23 @@ function buildScreens() {
     // 0 - Welcome
     { id:'welcome', type:'welcome' },
 
-    // ── Quarter-final 1: Lists ──
-    { id:'r1_intro', type:'round_intro', round:'Четвертьфинал 1', title:'Списки заданий', desc:'Два способа показать задания списком. Прокрути каждый экран и выбери, какой удобнее.' },
-    { id:'r1_filter', type:'mockup', variant:'a', variantTitle:V.filter.label, variantDesc:V.filter.desc, instruction:'Прокрути экран и посмотри', path:V.filter.path },
-    { id:'r1_priority', type:'mockup', variant:'b', variantTitle:V.priority.label, variantDesc:V.priority.desc, instruction:'Прокрути и сравни с предыдущим', path:V.priority.path },
-    { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:TOTAL_Q, text:'Какой список удобнее?', choices:['А — '+V.filter.label, 'Б — '+V.priority.label, 'Оба нормально','Оба не понравились'], required:true },
+    // ── Quarter-final 1: List vs Board ──
+    { id:'r1_intro', type:'round_intro', round:'Четвертьфинал 1', title:'Список vs Доска', desc:'Простой список заданий или канбан-доска со столбцами по статусу. Посмотри оба и выбери.' },
+    { id:'r1_a', type:'mockup', variant:'a', variantTitle:V.filter.label, variantDesc:V.filter.desc, instruction:'Прокрути экран и посмотри', path:V.filter.path },
+    { id:'r1_b', type:'mockup', variant:'b', variantTitle:V.kanban.label, variantDesc:V.kanban.desc, instruction:'Листай колонки и сравни', path:V.kanban.path },
+    { id:'r1_q1', type:'choice', icon:'&#129504;', number:1, total:TOTAL_Q, text:'Где удобнее смотреть задания?', choices:['А — '+V.filter.label, 'Б — '+V.kanban.label, 'Оба нормально','Оба не понравились'], required:true },
 
-    // ── Quarter-final 2: Time ──
-    { id:'r2_intro', type:'round_intro', round:'Четвертьфинал 2', title:'Время и календарь', desc:'Задания на временной шкале или в календаре. Посмотри оба и выбери.' },
-    { id:'r2_timeline', type:'mockup', variant:'a', variantTitle:V.timeline.label, variantDesc:V.timeline.desc, instruction:'Прокрути экран и посмотри', path:V.timeline.path },
-    { id:'r2_calendar', type:'mockup', variant:'b', variantTitle:V.calendar.label, variantDesc:V.calendar.desc, instruction:'Прокрути и сравни', path:V.calendar.path },
-    { id:'r2_q1', type:'choice', icon:'&#128197;', number:2, total:TOTAL_Q, text:'Где проще найти нужное задание?', choices:['А — '+V.timeline.label, 'Б — '+V.calendar.label, 'Одинаково','Оба неудобные'], required:true },
+    // ── Quarter-final 2: Priority vs Calendar ──
+    { id:'r2_intro', type:'round_intro', round:'Четвертьфинал 2', title:'Приоритеты vs Календарь', desc:'Задания по важности или по дням недели. Посмотри оба и выбери.' },
+    { id:'r2_a', type:'mockup', variant:'a', variantTitle:V.priority.label, variantDesc:V.priority.desc, instruction:'Прокрути экран и посмотри', path:V.priority.path },
+    { id:'r2_b', type:'mockup', variant:'b', variantTitle:V.calendar.label, variantDesc:V.calendar.desc, instruction:'Прокрути и сравни', path:V.calendar.path },
+    { id:'r2_q1', type:'choice', icon:'&#128197;', number:2, total:TOTAL_Q, text:'Где проще найти нужное задание?', choices:['А — '+V.priority.label, 'Б — '+V.calendar.label, 'Одинаково','Оба неудобные'], required:true },
 
-    // ── Quarter-final 3: Boards ──
-    { id:'r3_intro', type:'round_intro', round:'Четвертьфинал 3', title:'Доски и таблицы', desc:'Доска со столбцами или таблица «дни × предметы». Посмотри и выбери.' },
-    { id:'r3_kanban', type:'mockup', variant:'a', variantTitle:V.kanban.label, variantDesc:V.kanban.desc, instruction:'Листай колонки влево-вправо', path:V.kanban.path },
-    { id:'r3_matrix', type:'mockup', variant:'b', variantTitle:V.matrix.label, variantDesc:V.matrix.desc, instruction:'Посмотри на таблицу', path:V.matrix.path },
-    { id:'r3_q1', type:'choice', icon:'&#128202;', number:3, total:TOTAL_Q, text:'Что помогает лучше понять, что делать?', choices:['А — '+V.kanban.label, 'Б — '+V.matrix.label, 'Одинаково','Оба запутывают'], required:true },
+    // ── Quarter-final 3: Timeline vs Matrix ──
+    { id:'r3_intro', type:'round_intro', round:'Четвертьфинал 3', title:'Таймлайн vs Таблица', desc:'Вертикальная линия времени или таблица «дни × предметы». Посмотри и выбери.' },
+    { id:'r3_a', type:'mockup', variant:'a', variantTitle:V.timeline.label, variantDesc:V.timeline.desc, instruction:'Прокрути экран и посмотри', path:V.timeline.path },
+    { id:'r3_b', type:'mockup', variant:'b', variantTitle:V.matrix.label, variantDesc:V.matrix.desc, instruction:'Посмотри на таблицу', path:V.matrix.path },
+    { id:'r3_q1', type:'choice', icon:'&#128202;', number:3, total:TOTAL_Q, text:'Что помогает лучше понять, что делать?', choices:['А — '+V.timeline.label, 'Б — '+V.matrix.label, 'Одинаково','Оба запутывают'], required:true },
 
     // ── Quarter-final 4: Quick Wins (bye — just preview) ──
     { id:'r4_intro', type:'round_intro', round:'Четвертьфинал 4', title:'Умная очередь', desc:'Приложение само расставляет задания по порядку — от простых и срочных к сложным. Quick Wins автоматически проходит в полуфинал.' },
@@ -536,8 +536,8 @@ function render() {
 
   if (s.type === 'finish') {
     const champion = getWinner('final_q1',
-      getWinner('s1_q1', getWinner('r1_q1', V.filter, V.priority), getWinner('r2_q1', V.timeline, V.calendar)),
-      getWinner('s2_q1', getWinner('r3_q1', V.kanban, V.matrix), V.quickwins)
+      getWinner('s1_q1', getWinner('r1_q1', V.filter, V.kanban), getWinner('r2_q1', V.priority, V.calendar)),
+      getWinner('s2_q1', getWinner('r3_q1', V.timeline, V.matrix), V.quickwins)
     );
     html += `
       <div class="finish-icon">&#127942;</div>
