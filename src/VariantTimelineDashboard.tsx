@@ -50,7 +50,7 @@ export default function VariantTimelineDashboard({
       map.get(key)!.items.push(hw);
     }
     return [...map.entries()].sort((a, b) => a[1].date.getTime() - b[1].date.getTime());
-  }, [showDone, visibleHomework]);
+  }, [showDone]);
 
   return (
     <div className="variant">
