@@ -147,15 +147,42 @@ textarea::placeholder{color:var(--text-dim)}
 .iframe-loader.hidden{opacity:0;pointer-events:none}
 .mockup-instruction{text-align:center;font-size:14px;font-weight:600;color:var(--accent-light);margin-bottom:6px;padding:8px 14px;background:rgba(124,92,252,.1);border:1.5px solid rgba(124,92,252,.25);border-radius:12px}
 
-/* ── Bracket visualization ── */
-.bracket{display:flex;flex-direction:column;gap:8px;padding:4px 0}
-.bracket-match{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px}
-.bracket-match.winner{border-color:var(--accent);background:rgba(124,92,252,.1)}
-.bracket-vs{color:var(--text-dim);font-size:11px;font-weight:600;flex-shrink:0}
-.bracket-name{font-size:13px;font-weight:600;flex:1}
-.bracket-name.dim{color:var(--text-dim);font-weight:400}
-.bracket-icon{font-size:16px;flex-shrink:0}
-.bracket-label{font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:4px 0}
+/* ── Bracket tree ── */
+.bracket-tree{display:flex;flex-direction:column;gap:0;width:100%;animation:fu .5s ease-out .3s both}
+.bracket-stage{margin-bottom:2px}
+.bracket-stage-label{font-size:10px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:6px 0 4px;text-align:center}
+.bracket-half{display:flex;flex-direction:column;gap:0;margin-bottom:4px}
+.bracket-pair{display:flex;gap:4px;padding:0 2px}
+.bracket-slot{flex:1;display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:500;transition:all .3s}
+.bracket-slot--win{border-color:var(--accent);background:rgba(124,92,252,.12);color:var(--text)}
+.bracket-slot--lose{opacity:.35;text-decoration:line-through;color:var(--text-dim)}
+.bracket-slot--auto{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.08);color:var(--success)}
+.bracket-slot-icon{font-size:13px;flex-shrink:0;width:18px;text-align:center}
+.bracket-slot-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bracket-connector{display:flex;align-items:center;justify-content:center;height:20px;position:relative}
+.bracket-connector::before{content:'';position:absolute;top:0;left:25%;right:25%;bottom:50%;border:1.5px solid var(--border);border-top:none;border-radius:0 0 8px 8px}
+.bracket-connector::after{content:'';position:absolute;bottom:0;left:50%;width:2px;height:50%;background:var(--border);transform:translateX(-50%)}
+.bracket-connector-single{display:flex;align-items:center;justify-content:center;height:16px;position:relative}
+.bracket-connector-single::after{content:'';position:absolute;left:50%;width:2px;height:100%;background:var(--border);transform:translateX(-50%)}
+.bracket-next{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;background:linear-gradient(135deg,rgba(124,92,252,.15),rgba(236,72,153,.1));border:1.5px solid rgba(124,92,252,.3);border-radius:12px;font-size:13px;font-weight:700;color:var(--accent-light)}
+.bracket-next--final{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.1));border-color:rgba(245,158,11,.3);color:#f59e0b}
+.bracket-divider{height:10px}
+.bracket-vs-label{font-size:11px;color:var(--text-dim);font-weight:600}
+/* full tree for final */
+.bracket-full{display:flex;gap:6px;align-items:stretch;width:100%;overflow-x:auto;padding:4px 0}
+.bracket-col{display:flex;flex-direction:column;justify-content:space-around;gap:4px;flex:1;min-width:0}
+.bracket-col-label{font-size:9px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:center;padding-bottom:4px;white-space:nowrap}
+.bracket-cell{display:flex;align-items:center;gap:4px;padding:5px 8px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:10px;min-height:28px;white-space:nowrap;overflow:hidden}
+.bracket-cell--win{border-color:var(--accent);background:rgba(124,92,252,.1)}
+.bracket-cell--lose{opacity:.3;text-decoration:line-through}
+.bracket-cell--auto{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.06)}
+.bracket-cell--next{border-color:#f59e0b;background:rgba(245,158,11,.1);font-weight:700;color:#f59e0b;justify-content:center}
+.bracket-cell--champ{border-color:#f59e0b;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.08));font-weight:700;color:#f59e0b;justify-content:center;font-size:11px}
+.bracket-lines{display:flex;flex-direction:column;justify-content:space-around;width:14px;flex-shrink:0;position:relative}
+.bracket-line-pair{flex:1;display:flex;align-items:center;position:relative}
+.bracket-line-pair::before{content:'';position:absolute;top:25%;bottom:25%;right:0;width:8px;border:1.5px solid var(--border);border-left:none;border-radius:0 6px 6px 0}
+.bracket-line-out{flex:1;display:flex;align-items:center;position:relative}
+.bracket-line-out::after{content:'';position:absolute;left:0;top:50%;width:100%;height:1.5px;background:var(--border)}
 
 /* ── Sending overlay ── */
 .sending-overlay{display:none;position:fixed;inset:0;background:rgba(15,15,26,.85);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px}
@@ -245,6 +272,114 @@ function getWinner(qId, varA, varB) {
   if (!a || a.choiceIndex === undefined) return varA;
   return a.choiceIndex === 1 ? varB : varA;
 }
+function getLoser(qId, varA, varB) {
+  const a = answers[qId];
+  if (!a || a.choiceIndex === undefined) return varB;
+  return a.choiceIndex === 1 ? varA : varB;
+}
+
+// ══════════════════════════════════════
+// BRACKET BUILDERS
+// ══════════════════════════════════════
+function slot(v, cls) {
+  const icons = {'win':'&#10004;','lose':'&#10008;','auto':'&#9889;'};
+  return `<div class="bracket-slot bracket-slot--${cls}"><span class="bracket-slot-icon">${icons[cls]||''}</span><span class="bracket-slot-name">${v.label}</span></div>`;
+}
+
+function buildSemiBracketHtml() {
+  const w1 = getWinner('r1_q1', V.filter, V.priority);
+  const l1 = getLoser('r1_q1', V.filter, V.priority);
+  const w2 = getWinner('r2_q1', V.timeline, V.calendar);
+  const l2 = getLoser('r2_q1', V.timeline, V.calendar);
+  const w3 = getWinner('r3_q1', V.kanban, V.matrix);
+  const l3 = getLoser('r3_q1', V.kanban, V.matrix);
+
+  return `
+  <div class="bracket-tree">
+    <div class="bracket-stage-label">&#127942; Результаты четвертьфиналов</div>
+
+    <div class="bracket-half">
+      <div class="bracket-pair">${slot(w1,'win')}${slot(l1,'lose')}</div>
+      <div class="bracket-connector"></div>
+      <div class="bracket-pair">${slot(w2,'win')}${slot(l2,'lose')}</div>
+      <div class="bracket-connector-single"></div>
+      <div class="bracket-next">&#9876;&#65039; ПФ1: ${w1.label} <span class="bracket-vs-label">vs</span> ${w2.label}</div>
+    </div>
+
+    <div class="bracket-divider"></div>
+
+    <div class="bracket-half">
+      <div class="bracket-pair">${slot(w3,'win')}${slot(l3,'lose')}</div>
+      <div class="bracket-connector"></div>
+      <div class="bracket-pair">${slot(V.quickwins,'auto')}<div class="bracket-slot" style="opacity:.15;border-style:dashed"><span class="bracket-slot-name" style="text-align:center;color:var(--text-dim)">авто</span></div></div>
+      <div class="bracket-connector-single"></div>
+      <div class="bracket-next">&#9876;&#65039; ПФ2: ${w3.label} <span class="bracket-vs-label">vs</span> ${V.quickwins.label}</div>
+    </div>
+  </div>`;
+}
+
+function buildFinalBracketHtml() {
+  // QF results
+  const w1 = getWinner('r1_q1', V.filter, V.priority);
+  const l1 = getLoser('r1_q1', V.filter, V.priority);
+  const w2 = getWinner('r2_q1', V.timeline, V.calendar);
+  const l2 = getLoser('r2_q1', V.timeline, V.calendar);
+  const w3 = getWinner('r3_q1', V.kanban, V.matrix);
+  const l3 = getLoser('r3_q1', V.kanban, V.matrix);
+  // SF results
+  const sf1w = getWinner('s1_q1', w1, w2);
+  const sf1l = getLoser('s1_q1', w1, w2);
+  const sf2w = getWinner('s2_q1', w3, V.quickwins);
+  const sf2l = getLoser('s2_q1', w3, V.quickwins);
+
+  function cell(v, cls) {
+    return `<div class="bracket-cell bracket-cell--${cls}">${v.label}</div>`;
+  }
+
+  return `
+  <div class="bracket-tree">
+    <div class="bracket-stage-label">&#127942; Турнирная сетка</div>
+    <div class="bracket-full">
+      <!-- QF column -->
+      <div class="bracket-col">
+        <div class="bracket-col-label">ЧФ</div>
+        ${cell(w1,'win')}${cell(l1,'lose')}
+        ${cell(w2,'win')}${cell(l2,'lose')}
+        ${cell(w3,'win')}${cell(l3,'lose')}
+        ${cell(V.quickwins,'auto')}
+        <div class="bracket-cell" style="opacity:0;min-height:0;padding:0;border:none"></div>
+      </div>
+      <!-- Lines QF→SF -->
+      <div class="bracket-lines">
+        <div class="bracket-line-pair"></div>
+        <div class="bracket-line-pair"></div>
+        <div class="bracket-line-pair"></div>
+        <div class="bracket-line-pair"></div>
+      </div>
+      <!-- SF column -->
+      <div class="bracket-col">
+        <div class="bracket-col-label">ПФ</div>
+        <div style="flex:1"></div>
+        ${cell(sf1w,'win')}${cell(sf1l,'lose')}
+        <div style="flex:2"></div>
+        ${cell(sf2w,'win')}${cell(sf2l,'lose')}
+        <div style="flex:1"></div>
+      </div>
+      <!-- Lines SF→Final -->
+      <div class="bracket-lines">
+        <div class="bracket-line-pair"></div>
+        <div class="bracket-line-pair"></div>
+      </div>
+      <!-- Final column -->
+      <div class="bracket-col">
+        <div class="bracket-col-label">&#127942;</div>
+        <div style="flex:1"></div>
+        <div class="bracket-cell bracket-cell--champ">&#9876;&#65039; ${sf1w.label} vs ${sf2w.label}</div>
+        <div style="flex:1"></div>
+      </div>
+    </div>
+  </div>`;
+}
 
 // ══════════════════════════════════════
 // IFRAME BUILDER
@@ -318,7 +453,7 @@ function buildScreens() {
     { id:'qw_q1', type:'choice', icon:'&#9889;', number:4, total:TOTAL_Q, text:'Полезно, когда приложение подсказывает, с чего начать?', choices:['Да, очень — не надо думать','Немного помогает','Всё равно','Нет, сам(а) разберусь'], required:true },
 
     // ── Semi-final 1 ──
-    { id:'semi_intro', type:'round_intro', badgeClass:'round-badge--semi', round:'Полуфинал', title:'Лучшие против лучших', desc:'Победители четвертьфиналов встречаются. Посмотри оба экрана заново и выбери.' },
+    { id:'semi_intro', type:'round_intro', badgeClass:'round-badge--semi', round:'Полуфинал', title:'Лучшие против лучших', desc:'Победители четвертьфиналов встречаются. Посмотри оба экрана заново и выбери.', bracketBuilder:'semi' },
     { id:'s1_a', type:'mockup', variant:'a', variantTitle:w1.label, variantDesc:w1.desc, instruction:'Победитель ЧФ-1 — посмотри заново', path:w1.path },
     { id:'s1_b', type:'mockup', variant:'b', variantTitle:w2.label, variantDesc:w2.desc, instruction:'Победитель ЧФ-2 — сравни', path:w2.path },
     { id:'s1_q1', type:'choice', icon:'&#9876;&#65039;', number:5, total:TOTAL_Q, text:'Кто проходит в финал?', choices:['А — '+w1.label, 'Б — '+w2.label], required:true },
@@ -329,7 +464,7 @@ function buildScreens() {
     { id:'s2_q1', type:'choice', icon:'&#9876;&#65039;', number:6, total:TOTAL_Q, text:'Кто проходит в финал?', choices:['А — '+w3.label, 'Б — '+w4.label], required:true },
 
     // ── Final ──
-    { id:'final_intro', type:'round_intro', badgeClass:'round-badge--final', round:'Финал', title:'Главный выбор', desc:'Два лучших экрана. Какой станет чемпионом?' },
+    { id:'final_intro', type:'round_intro', badgeClass:'round-badge--final', round:'Финал', title:'Главный выбор', desc:'Два лучших экрана. Какой станет чемпионом?', bracketBuilder:'final' },
     { id:'f_a', type:'mockup', variant:'a', variantTitle:sf1.label, variantDesc:sf1.desc, instruction:'Финалист А — посмотри внимательно', path:sf1.path },
     { id:'f_b', type:'mockup', variant:'b', variantTitle:sf2.label, variantDesc:sf2.desc, instruction:'Финалист Б — сравни', path:sf2.path },
     { id:'final_q1', type:'choice', icon:'&#127942;', number:7, total:TOTAL_Q, text:'Какой экран — чемпион?', choices:['А — '+sf1.label, 'Б — '+sf2.label], required:true },
@@ -417,11 +552,13 @@ function render() {
 
   if (s.type === 'round_intro') {
     const badgeCls = s.badgeClass ? ' ' + s.badgeClass : '';
+    const hasBracket = !!s.bracketBuilder;
     html += `
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;text-align:center">
         <div class="round-badge${badgeCls}">${s.round}</div>
         <div class="round-title">${s.title}</div>
         <div class="reveal-text" id="revealTarget"></div>
+        ${hasBracket ? '<div id="bracketSlot" style="width:100%;opacity:0;transition:opacity .5s"></div>' : ''}
       </div>`;
     nav.style.display = 'flex';
     document.getElementById('btnBack').style.display = current > 1 ? '' : 'none';
@@ -430,7 +567,14 @@ function render() {
     html += '</div>';
     app.innerHTML = html;
     revealWords(document.getElementById('revealTarget'), s.desc, () => {
-      document.getElementById('btnNext').disabled = false;
+      if (hasBracket) {
+        const bracketSlot = document.getElementById('bracketSlot');
+        bracketSlot.innerHTML = s.bracketBuilder === 'final' ? buildFinalBracketHtml() : buildSemiBracketHtml();
+        requestAnimationFrame(() => { bracketSlot.style.opacity = '1'; });
+        setTimeout(() => { document.getElementById('btnNext').disabled = false; }, 1500);
+      } else {
+        document.getElementById('btnNext').disabled = false;
+      }
     });
     return;
   }
