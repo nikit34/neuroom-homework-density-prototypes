@@ -105,10 +105,9 @@ export default function VariantCalendarWeek({ selectedSubjectId = null, onSelect
           const isFuture = day > new Date(new Date().setHours(23, 59, 59, 999));
 
           const isPast = !today && !isFuture;
-          const hasActionable = items.some((hw) => hw.status === 10 || hw.status === 25);
 
-          // Прошлые дни: скрываем если пусто или нет активных (всё сдано/проверено)
-          if (isPast && !hasActionable) return null;
+          // Прошлые пустые дни — скрываем
+          if (isPast && items.length === 0) return null;
           // Будущие пустые — скрываем
           if (isFuture && items.length === 0) return null;
 
